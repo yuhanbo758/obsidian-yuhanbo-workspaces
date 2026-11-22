@@ -4,7 +4,7 @@ import { DEFAULT_WORKSPACE_ICON, DEFAULT_ICON_COLOR_SWATCH } from "./settings";
 import { refreshIfDeclarative } from "./settingsDeclarative";
 import WorkspacesPlus from "./main";
 
-// Opened by the "New empty workspace" command (not the settings tab's own "+" button, which
+// Opened by the "新建空白工作区" command (not the settings tab's own "+" button, which
 // stays a single click with no dialog -- see its own comment in settings.ts). Collects name/icon/
 // color up front rather than reusing buildWorkspaceIconSetting()/buildWorkspaceIconColorSetting():
 // those mutate an existing workspace's settings object live, but there's no workspace to attach
@@ -22,12 +22,12 @@ export class NewWorkspaceModal extends Modal {
   }
 
   onOpen(): void {
-    this.setTitle("New workspace");
+    this.setTitle("新建工作区");
 
     let nameInputEl: HTMLInputElement;
-    new Setting(this.contentEl).setName("Name").addText(text => {
+    new Setting(this.contentEl).setName("名称").addText(text => {
       nameInputEl = text.inputEl;
-      text.setPlaceholder("New workspace");
+      text.setPlaceholder("新建工作区");
       // Trimmed here (same as the icon field below) rather than left for createBlankWorkspace()
       // to trim internally -- a whitespace-only value needs to read as empty *before* the
       // `this.name || undefined` check in create(), or it's treated as a real name and silently
@@ -44,8 +44,8 @@ export class NewWorkspaceModal extends Modal {
     const previewEl = createSpan({ cls: "workspace-icon-preview" });
     setIcon(previewEl, DEFAULT_WORKSPACE_ICON);
     new Setting(this.contentEl)
-      .setName("Icon")
-      .setDesc("Leave blank to use the default icon.")
+      .setName("图标")
+      .setDesc("留空使用默认图标。")
       .then(setting => setting.controlEl.prepend(previewEl))
       .addText(text => {
         text.setPlaceholder(DEFAULT_WORKSPACE_ICON);
@@ -58,7 +58,7 @@ export class NewWorkspaceModal extends Modal {
 
     let colorPicker: ColorComponent;
     new Setting(this.contentEl)
-      .setName("Icon color")
+      .setName("图标颜色")
       .addColorPicker(picker => {
         colorPicker = picker;
         picker.setValue(DEFAULT_ICON_COLOR_SWATCH).onChange(value => {
@@ -68,7 +68,7 @@ export class NewWorkspaceModal extends Modal {
       .addExtraButton(button =>
         button
           .setIcon("rotate-ccw")
-          .setTooltip("Reset to default color")
+          .setTooltip("恢复默认颜色")
           .onClick(() => {
             this.iconColor = "";
             colorPicker.setValue(DEFAULT_ICON_COLOR_SWATCH);
@@ -76,10 +76,10 @@ export class NewWorkspaceModal extends Modal {
       );
 
     new Setting(this.contentEl)
-      .addButton(button => button.setButtonText("Cancel").onClick(() => this.close()))
+      .addButton(button => button.setButtonText("取消").onClick(() => this.close()))
       .addButton(button =>
         button
-          .setButtonText("Create")
+          .setButtonText("创建")
           .setCta()
           .onClick(() => this.create())
       );
@@ -102,12 +102,12 @@ export class NewWorkspaceModal extends Modal {
     // <-> settings.ts, plus main.ts <-> utils.ts) confusing the checker; not worth chasing further
     // since this form works reliably.
     if (result.success === false) {
-      new Notice(result.reason ?? "Could not create workspace.");
+      new Notice(result.reason ?? "无法创建工作区。");
       return;
     }
     this.close();
     this.plugin.workspacePlugin.loadWorkspace(result.name);
     refreshIfDeclarative(this.plugin.settingsTab);
-    new Notice(`Created and switched to workspace "${result.name}"`);
+    new Notice(`已创建并切换到工作区「${result.name}」。`);
   }
 }

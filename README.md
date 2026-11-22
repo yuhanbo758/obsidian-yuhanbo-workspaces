@@ -1,194 +1,79 @@
-# Workspaces Plus
+# yuhanbo-workspaces
 
-![Artboard-2-3](https://user-images.githubusercontent.com/46250921/133352216-e0a2c9b6-070b-46f7-9a6f-d3a18f0c69b1.png)
+用于管理 Obsidian 工作区的中文插件。基于 [Workspaces Plus](https://github.com/jsmorabito/obsidian-workspaces-plus)（上游基线 `b272d95f64ab1e8d2ef1ad12d0c330152a89b51f`），保留 NothingIsLost 和 Johnny 的原作者署名，按 [GPL-3.0](LICENSE) 分发。
 
-Workspaces Plus is a plugin that expands the functionality of [workspaces](https://help.obsidian.md/Plugins/Workspaces) in [Obsidian](https://obsidian.md/).
+插件 ID 为 `yuhanbo-workspaces`，最低支持 Obsidian 1.8.7。当前通过 [GitHub Releases](https://github.com/yuhanbo758/obsidian-yuhanbo-workspaces/releases) 分发。手动安装或更新时，将 Release 的 `main.js`、`manifest.json`、`styles.css` 放入目标库的 `.obsidian/plugins/yuhanbo-workspaces/`，保留已有的 `data.json`。然后重新打开 Obsidian 库。
 
-> [!WARNING]
-> Obsidian's core workspace plugin must be activated for Workspaces Plus to work properly
+## 使用方式
 
-## Features
+1. 在「设置 → 核心插件」启用「工作区」。
+2. 禁用原版 Workspaces Plus，避免两个插件同时包装核心工作区功能。
+3. 在「设置 → 第三方插件」启用「yuhanbo-workspaces」。
+4. 使用状态栏或命令「打开工作区切换器」选择工作区。移动端可使用命令，或开启侧边工具栏按钮。
+5. 在插件设置中展开工作区，编辑名称、说明、图标、收藏或文件覆盖。
 
-### Workspace Indicator
+## 新增的个人管理功能
 
-- current active workspace shown in status bar
-- click on workspace name in status bar to open workspace picker menu
-- `shift-click` status bar icon or workspace name to save the workspace
-<img src="https://user-images.githubusercontent.com/46250921/133325073-af2d58ec-e8a1-48fb-a48c-792b348235fd.png" width="350">
+| 功能 | 使用方式 |
+|---|---|
+| 收藏置顶 | 在每个工作区设置中开启「收藏此工作区」，切换列表显示星标。 |
+| 最近使用排序 | 「个人工作区管理 → 工作区排序」选择最近使用或名称；收藏始终置顶。最近记录最多 20 项。 |
+| 布局规模提示 | 切换列表显示所有布局树中的标签页和 Markdown 笔记数量，包括浮动窗口。30 个及以上笔记提示「大型布局」，不读取正文、不初始化后台视图。 |
+| 复制已保存布局 | 在工作区设置点击「复制已保存布局」，或执行「复制当前已保存的工作区」。副本有独立布局和配置，不切换当前屏幕；当前未保存变化不包含在副本中。 |
+| 本地备份与恢复 | 使用设置中的按钮或「备份工作区配置」「恢复工作区配置备份」命令。默认保留最新 5 份，可选 1、5、10、20 份。 |
 
-### Workspace Picker
+备份保存于本插件的本地 `data.json`，内容为**已保存的工作区配置**，不包含笔记正文，也不替代整个库的备份。恢复前需确认，并成功保存一份恢复前备份；恢复覆盖同名工作区、补回缺失工作区，保留其他工作区，不自动切换当前布局。恢复后的配置通过切换列表加载。复制、备份都会保留上游模式配置，但模式的复制入口只面向普通工作区。
 
-- switch, delete, rename, and create new workspaces
-<img src="https://user-images.githubusercontent.com/46250921/133325287-94a36543-f0ee-4956-9ad5-91c572e5b3c4.png" width="350">
+## 配置说明
 
-### Workspace Switcher modal
+- **布局改变时自动保存当前工作区**：适合希望记住随时变化的布局；需要固定布局时关闭。
+- **记住并恢复打开的文件**：保存工作区时记录标签页文件路径，切回时恢复。
+- **切换时保留左右侧栏布局 / 侧边工具栏图标**：切换主工作区时沿用当前侧栏或工具栏。
+- **启动时恢复上次工作区的已保存布局**：默认关闭。开启会舍弃上次未保存的布局变化。
+- **工作区模式（测试功能）**：仅桌面端，保存并切换编辑器、外观等核心设置。可选择跟随系统深色模式、实时预览改变时重载应用。
+- **标签页文件覆盖**：按叶节点配置要打开的文件，支持上游日期模板变量；覆盖优先于普通文件跟踪。
+- **键盘操作**：Enter 加载，Ctrl+Enter 重命名，Shift+Delete 删除，Shift+Enter 保存，Alt+Enter 保存并切换，Ctrl+, 打开设置。数字标记开启且搜索为空时，可按 1–9 快速切换。
 
-- open with assignable hotkey
-- switch, delete, rename, and create new workspaces
-<img src="https://user-images.githubusercontent.com/46250921/133325396-bc429aa5-696f-4e44-8e78-4a9bd504867e.png" width="400">
+界面使用中文；原有命令 ID 稳定，静态与动态命令均使用 `obsidian-yuhanbo-` 前缀。完整注册 ID 会带上 `yuhanbo-workspaces:`。上游快捷键需手动迁移到本插件命令。
 
-### Hotkeys
+## 多屏性能与修复
 
-- open Workspaces Plus switcher modal
-- open specific workspace by name
-- cycle to the next workspace
-- save the current workspace and cycle to the next workspace
+- 工作区恢复保留后台标签页延迟加载，用户激活时由 Obsidian 初始化视图；不会批量调用 `loadIfDeferred`。
+- 快速切换或卸载后旧恢复任务失效；已交给核心 `changeLayout` 的操作无法外部中断。
+- 自动保存等待实际布局恢复结束，不再固定只暂停两秒。尚未执行的自动保存也会再次检查加载状态。
+- 修复删除快捷键误传键盘事件、空列表选择、含引号的工作区名称匹配和重复渲染标记。
+- 状态栏样式已匹配本插件 ID。
 
-### Plugin Options
+## 开发与验证
 
-- Toggle keyboard shortcuts on/off for Workspace Picker
-- Toggle workspace delete confirmation on/off
-- Set default workspace switch behavior to always save when switching
-
-### Theming Options
-
-- Workspaces Plus adds a data attribute to the HTML document body which can be used to set workspace specific styling
-  - The data attribute is body[data-workspace-name="My Workspace"]
-  - The attribute will be updated upon the loading of any new workspace
-
-### Workspace Overrides
-
-- Ability to override pages in a workspace using the templates variables.
-
-## How to use
-
-After enabling the plugin from the settings menu, you will see that a workspace icon has been added to the status bar in the lower right corner of the interface. If you are already using workspaces in Obsidian, you will notice that the name of your current active workspace is located next to the that icon.
-
-> [!WARNING]
-> Obsidian's core workspace plugin must be activated for Workspaces Plus to work properly
-
-### Creating a Workspace
-
-You can create a workspace through either the Workspace Picker or the Workspace Switcher modal with the same workflow
-
-1. Type your new workspace name into the input field
-2. Use `shift-enter` to create the new workspace
-
-### Renaming a Workspace
-
-Rename workspaces from the picker or modal by clicking on the pencil icon next to the workspace name
-
-### Deleting a Workspace
-
-Workspaces can be deleted by either using the trach can icon next to the workspaces name or pressing the shortcut `shift-delete` while the workspace is selected in the menu
-
-### Opening a Workspace
-
-1. Open the Workspace Switcher via hotkey or click on the workspace icon or name in status bar to open the Workspace Picker
-2. You can open a workspace by clicking on it with your mouse or by pressing enter after navigating to it with the up/down arrows on your keyboard
-
-### Saving Workspaces
-
-- By default, workspaces are not automatically saved when switched
-- You can save a workspace with `shift-click` on the workspace icon or name in the status bar
-- From either switcher menu you can use `shift-enter` to save your current active workspace or `alt-enter` to save your current active workspace and switch to the new one you have selected
-- In the Plugin Options menu (located in Obsidians settings) you can toggle on a setting which will automatically save the active workspace on switch
-
-### Overriding a page in a Workspace
-
-- In settings scroll to the bottom and open the workspace you want to modify.
-- In the text box next to the page ID enter the string to load with template variables
-  - Example: 1 Journal/{{date:YYYY}}/{{date:YYYY-MM}}/{{date:YYYY-MM-DD}}.md
-- Switch to the workspace and the page will be loaded with the value from the override with the variables replaced.
-
-### Mobile
-
-Workspaces Plus runs on mobile (phone and tablet). A few differences from desktop:
-
-- Obsidian hides the status bar on mobile, so the status-bar workspace indicator isn't shown. Use the **Open workspace switcher** command (assign it to the mobile toolbar or a hotkey), or turn on **Show workspace sidebar ribbon icon** in settings — it's off by default, the same as on desktop.
-- The switcher and picker show their rename / delete / platform actions inline (no hover needed) with larger touch targets.
-- **Workspace Modes is desktop only.** Modes snapshot and restore Obsidian's core configuration, which is shared with mobile, so applying them on a phone or tablet would overwrite mobile-specific settings. Plain workspace switching, renaming, saving, overrides, and file tracking all work normally on mobile.
-
-## Extra
-
-<details>
-  <summary>Compact Workspace Picker CSS Snippet</summary>
-  
-![image](https://user-images.githubusercontent.com/46250921/135287222-ada674cf-e8e9-4bbf-9d99-07c9892b8e76.png)
-
-  ```css
-.workspaces-plus-modal.quick-switch {
-  padding: 0px;
-  border-radius: 5px;
-  min-width: 13em;
-}
-
-.workspaces-plus-moda.quick-switch .workspace-item {
-  padding-left: 2em;
-  padding-right: 4em;
-  font-size: 0.9em;
-}
-
-.workspaces-plus-modal.quick-switch .prompt-results {
-  padding-top: 0;
-}
-
-.workspaces-plus-modal.quick-switch .prompt-results::-webkit-scrollbar {
-  display: none;
-}
-
-.workspaces-plus-modal.quick-switch .workspace-results {
-  padding: 0px;
-}
-
-.workspaces-plus-modal.quick-switch .workspace-item.is-selected {
-  border-radius: 0px !important;
-}
-
-.workspaces-plus-modal.quick-switch input.prompt-input {
-  font-size: 0.9em;
-  padding: 0px 1em;
-  border-top-left-radius: 5px !important;
-  border-top-right-radius: 5px !important;
-  border-radius: 0px;
-  border: none !important;
-  border-bottom: 1px solid var(--background-modifier-border) !important;
-}
-
-.workspaces-plus-modal.quick-switch input.prompt-input:focus {
-  box-shadow: none;
-  border: none !important;
-  border-bottom: 1px solid var(--background-modifier-border) !important;
-}
-
-.workspaces-plus-modal.quick-switch .delete-workspace {
-  right: 0.7em !important;
-}
-
-.workspaces-plus-modal.quick-switch .rename-workspace {
-  right: 2em !important;
-}
+```powershell
+npm ci
+npm test
+npm run typecheck
+npm run lint
+npm run build
 ```
 
-</details>
+使用上游 Rollup，不新增运行时依赖。TypeScript 的 `skipLibCheck` 只跳过上游依赖声明冲突，项目源码仍检查。测试包含延迟加载、快速切换、模式切换、重命名、收藏排序、副本独立性、备份深拷贝、恢复确认及失败保护。
 
-## Installation
+请使用独立测试库验证修改。真实多屏切换、移动端真机和长期稳定性仍需客户端验收。
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/obsidian-workspaces-plus/`.
-- via Obsidian Community Plugins browser
+## 隐私与数据
 
-## Feedback
+插件在本地运行，无账号、付费依赖、广告、遥测或网络请求。工作区配置及备份保存在当前库内，不会上传，也不会读取库外文件。GitHub Actions 负责构建和发布，插件自身不下载更新。
 
-Share feedback, issues, and ideas on [github](https://github.com/nothingislost/obsidian-workspaces-plus/issues), with our [Workspaces Plus feedback survey](https://airtable.com/shrETC7GS1MOYSTAI), or tag the authors on Discord!
+## 发布与更新
 
-## Credits
+向 GitHub 默认分支 `main` 推送源码、样式、依赖或发布配置的变化，会启动自动发布。流程检查类型、运行测试并构建。若当前版本已经使用，会递增补丁号并同步版本文件，再发布同名标签和三个带构建证明的附件。只改 README 不会触发发布。也可从 Actions 页面手动启动工作流。
 
-- This plugin is being developed by [Johnny ✨](https://github.com/jsmorabito) and [Nothingislost](https://github.com/nothingislost)
-- Workspace Picker and Modal based off of [Obsidian Theme Picker](https://github.com/kenset/obsidian-theme-picker) by [Kenset](https://github.com/kenset)
+本项目是 Workspaces Plus 的衍生版本。提交 Obsidian 官方社区目录仍需要满足其 [fork 收录政策](https://docs.obsidian.md/community-directory/developer-policies#Forks)。
 
-## Changelog
+## 回滚
 
-- 0.4.17 - Beta
-  - Fix issue with workspaces using tabs so they are parsed correctly for overrides.
-  - Added details on how to use overrides to template files and paths.
+更新前请备份当前安装目录。回滚时禁用插件并恢复旧的 `main.js`、`manifest.json` 和 `styles.css`，保留原有 `data.json`。
 
-- 0.3.1
-  - Fix bug in workspace rename logic which was preventing hotkey reassignment
+## 官方参考
 
-- 0.3.0
-  - Add hotkey support for loading specific workspaces
-    - This feature will create a command for every workspace in your vault, which can then be bound to hotkeys
-    - This feature supports renaming workspaces while maintaining the associated hotkey
-    - You can add these workspace load commands to cMenu and workspace renames will automatically update the cMenu button as well
-  - Add a data attribute to the body of the HTML document which indicates the currently active workspace name.
-    - The selector looks like this: body[data-workspace-name="My Workspace"]
+- [上游项目](https://github.com/jsmorabito/obsidian-workspaces-plus)
+- [Obsidian API](https://github.com/obsidianmd/obsidian-api)
+- [Obsidian 开发文档](https://docs.obsidian.md/Home)

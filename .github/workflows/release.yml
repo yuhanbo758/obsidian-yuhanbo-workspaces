@@ -1,0 +1,98 @@
+name: Release Obsidian plugin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'styles.css'
+      - 'manifest*.json'
+      - 'versions.json'
+      - 'package*.json'
+      - 'tsconfig.json'
+      - 'eslint.config.mjs'
+      - 'rollup.config.js'
+      - 'scripts/prepare-release.mjs'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: obsidian-plugin-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Select an unused version
+        id: prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # 同时保留已有标签和草稿 Release 占用的版本，避免覆盖历史发布。
+          release_tags="$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq '.[].tag_name')"
+          version="$(node -p "require('./manifest.json').version")"
+          stable_tag="$(git tag --list --sort=-version:refname | awk '/^[0-9]+\.[0-9]+\.[0-9]+$/ && !found++ { print }')"
+          if [[ -n "$stable_tag" && "$version" != "$stable_tag" && "$(printf '%s\n' "$stable_tag" "$version" | sort -V | tail -n 1)" == "$stable_tag" ]]; then
+            echo "The manifest version is older than tag $stable_tag."
+            exit 1
+          fi
+          while git show-ref --tags --verify --quiet "refs/tags/$version" || grep -Fqx -- "$version" <<< "$release_tags"; do
+            node scripts/prepare-release.mjs --bump-patch
+            version="$(node -p "require('./manifest.json').version")"
+          done
+          node scripts/prepare-release.mjs --sync-manifest
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Test and build
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test
+          npm run build
+          node --check main.js
+          git diff --check
+          test -s main.js && test -s manifest.json && test -s styles.css
+
+      - name: Attest release files
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
+
+      - name: Synchronize versions and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add manifest.json manifest-beta.json package.json package-lock.json versions.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: prepare release $VERSION"
+          fi
+          # 原子更新主分支和标签，远端有新提交时拒绝发布过期内容。
+          git tag "$VERSION"
+          git push --atomic origin HEAD:refs/heads/main "refs/tags/$VERSION"
+          gh release create "$VERSION" main.js manifest.json styles.css --verify-tag --title "$VERSION" --generate-notes

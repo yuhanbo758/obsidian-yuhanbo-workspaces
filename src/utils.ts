@@ -97,7 +97,7 @@ export default class Utils {
   }
 
   getActiveModeDisplayName () {
-    return this.activeModeName ? this.activeModeName.replace(/^mode: /i, "") : "Global";
+    return this.activeModeName ? this.activeModeName.replace(/^mode: /i, "") : "全局设置";
   }
 
   setWorkspaceSettings (name: string, settings: WorkspaceCustomSettings): WorkspaceCustomSettings {
@@ -115,7 +115,7 @@ export default class Utils {
     const trimmed = newName.trim();
     if (!trimmed || trimmed === oldName) return { success: false };
     if (this.workspacePlugin.workspaces[trimmed]) {
-      return { success: false, reason: `A workspace named "${trimmed}" already exists.` };
+      return { success: false, reason: `工作区「${trimmed}」已存在。` };
     }
     this.workspacePlugin.workspaces[trimmed] = this.workspacePlugin.workspaces[oldName];
     delete this.workspacePlugin.workspaces[oldName];
@@ -136,7 +136,7 @@ export default class Utils {
   // hook main.ts's saveWorkspace patch fires.
   // `options.name` is used as-is (validated for collisions -- the caller is expected to have
   // asked the user for it, e.g. NewWorkspaceModal); omitting it falls back to the old
-  // auto-numbered "New workspace" behavior the settings tab's "+" button relies on.
+  // auto-numbered "新建工作区" behavior the settings tab's "+" button relies on.
   // Discriminated union (rather than a flat {success,name?,reason?}) so a caller can't destructure
   // `name` without narrowing on `success` first -- TS would otherwise let that compile even though
   // `name` only actually exists on the success branch.
@@ -146,12 +146,12 @@ export default class Utils {
     let name = options?.name?.trim();
     if (name) {
       if (this.workspacePlugin.workspaces[name]) {
-        return { success: false, reason: `A workspace named "${name}" already exists.` };
+        return { success: false, reason: `工作区「${name}」已存在。` };
       }
     } else {
-      name = "New workspace";
+      name = "新建工作区";
       for (let suffix = 2; this.workspacePlugin.workspaces[name]; suffix++) {
-        name = `New workspace ${suffix}`;
+        name = `新建工作区 ${suffix}`;
       }
     }
     const leafId = generateLayoutNodeId();
@@ -183,9 +183,9 @@ export default class Utils {
                 "file-explorer",
                 { sortOrder: "alphabetical", autoReveal: false, showSearch: false, searchQuery: "" },
                 "lucide-folder-closed",
-                "Files"
+                "文件"
               ),
-              createSidebarLeaf("bookmarks", { showSearch: false, searchQuery: "" }, "lucide-bookmark", "Bookmarks"),
+              createSidebarLeaf("bookmarks", { showSearch: false, searchQuery: "" }, "lucide-bookmark", "书签"),
               createSidebarLeaf(
                 "search",
                 {
@@ -197,7 +197,7 @@ export default class Utils {
                   sortOrder: "alphabetical",
                 },
                 "lucide-search",
-                "Search"
+                "搜索"
               ),
             ],
           },
@@ -215,7 +215,7 @@ export default class Utils {
     return { success: true, name };
   }
 
-  // Used by the settings tab's own "Delete this workspace" button -- the quick switcher's own
+  // Used by the settings tab's own "删除此工作区" button -- the quick switcher's own
   // delete (shift+delete / trash icon, workspaceModal.ts's doDelete) has its own separate flow and
   // isn't routed through this. Deleting the active workspace doesn't itself do anything to
   // Obsidian's "which workspace is active" pointer, which would otherwise keep naming a workspace
@@ -251,7 +251,7 @@ export default class Utils {
     if (this.isMode(name)) return this.getWorkspace(name);
   }
 
-  loadMode (workspaceName: string, modeName: string) {
+  async loadMode (workspaceName: string, modeName: string): Promise<boolean> {
     const workspace = this.getWorkspace(workspaceName);
     const workspaceSettings = this.getWorkspaceSettings(workspaceName);
     const mode = this.getMode(modeName);
@@ -263,17 +263,17 @@ export default class Utils {
       workspaceSettings && (workspaceSettings.mode = modeName);
     }
     // load the mode's sidebar layouts, if enabled
-    if (modeSettings?.saveSidebar && workspaceSettings.mode) {
+    if (modeSettings?.saveSidebar && workspaceSettings?.mode) {
       // The mode has its own explicit, per-mode sidebar choice -- a more specific setting
       // than the global preserveSidebarLayout toggle, so it should win rather than be
       // silently overwritten by whatever sidebar happens to be on screen.
-      mode && this.mergeSidebarLayout(mode, { skipSidebarPreserve: true });
+      if (mode) await this.mergeSidebarLayout(mode, { skipSidebarPreserve: true });
       this.updateFoldState(modeSettings);
     } else {
-      workspace && this.mergeSidebarLayout(workspace);
+      if (workspace) await this.mergeSidebarLayout(workspace);
       this.updateFoldState(workspaceSettings);
     }
-    this.workspacePlugin.saveData(); // call saveData on the workspace plugin to persist the workspace metadata to disk
+    await Promise.resolve(this.workspacePlugin.saveData());
     return true;
   }
 
@@ -426,7 +426,7 @@ export default class Utils {
     settings["theme"] = this.getDarkModeFromOS();
   }
 
-  mergeSidebarLayout (newLayout: Workspaces, { skipSidebarPreserve = false }: { skipSidebarPreserve?: boolean } = {}) {
+  mergeSidebarLayout (newLayout: Workspaces, { skipSidebarPreserve = false }: { skipSidebarPreserve?: boolean } = {}): Promise<void> {
     const workspace = this.app.workspace;
     const currentLayout = workspace.getLayout();
     newLayout.main = currentLayout["main"] as WorkspaceLayoutNode;
@@ -448,7 +448,7 @@ export default class Utils {
     if (this.plugin.settings.preserveSidebarLayout && !skipSidebarPreserve) {
       layoutToApply = this.preserveSidebarInLayout(layoutToApply, currentLayout);
     }
-    void workspace.changeLayout(layoutToApply);
+    return workspace.changeLayout(layoutToApply);
   }
 
   // Returns the number of real workspaces synced, or null if there's no ribbon on the current
@@ -493,7 +493,7 @@ export default class Utils {
       // Modes are keyed into this same map but aren't "workspaces" this setting is about --
       // mergeSidebarLayout() above handles sidebar preservation for mode switches on its own.
       if (this.isMode(name)) continue;
-      for (const key of present) ws[key] = JSON.parse(json[key]);
+      for (const key of present) ws[key] = JSON.parse(json[key]) as WorkspaceLayoutNode;
       count++;
     }
     return count;
@@ -505,7 +505,7 @@ export default class Utils {
     const present = SIDEBAR_KEYS.filter(key => key in sidebarSource && sidebarSource[key] !== undefined);
     if (present.length === 0) return targetLayout;
     const result: Workspaces = Object.assign({}, targetLayout);
-    for (const key of present) result[key] = JSON.parse(JSON.stringify(sidebarSource[key]));
+    for (const key of present) result[key] = JSON.parse(JSON.stringify(sidebarSource[key])) as WorkspaceLayoutNode;
     return result;
   }
 

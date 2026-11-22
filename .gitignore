@@ -4,7 +4,6 @@
 
 # npm
 node_modules
-package-lock.json
 
 # build
 main.js
@@ -17,10 +16,21 @@ data.json
 .env
 
 .DS_Store
-.github
 .hotreload
 *.zip
 *.code-workspace
 yarn.lock
 .vscode
 dist
+# Local validation reports
+outputs/
+
+# Private local configuration and generated artifacts
+AGENTS.md
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.obsidian/

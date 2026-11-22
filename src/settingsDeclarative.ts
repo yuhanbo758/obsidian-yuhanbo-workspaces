@@ -7,6 +7,7 @@
 import { Notice, PluginSettingTab } from "obsidian";
 import type { SettingDefinitionItem, SettingGroupItem, SettingDefinitionPage, Workspaces } from "obsidian";
 import type { WorkspacesPlusSettingsTab } from "./settings";
+import { personalSettingDefinitions, personalWorkspaceDefinitions } from "./personalWorkspaceUI";
 import {
   TOGGLE_TEXT,
   WORKSPACE_BADGES_TEXT,
@@ -19,7 +20,7 @@ import {
 } from "./settings";
 
 // Called from main.ts after any workspace-list-changing action that doesn't already have a
-// direct reference to this tab's own instance -- e.g. the "New empty workspace" command, which
+// direct reference to this tab's own instance -- e.g. the "新建空白工作区" command, which
 // (unlike everything else in this file) can run on any Obsidian version and outside the settings
 // tab's own context entirely. update() only exists on 1.13.0+, hence the optional-call cast
 // rather than calling it directly the way the rest of this file does (safe there only because
@@ -31,7 +32,7 @@ export function refreshIfDeclarative(tab: WorkspacesPlusSettingsTab): void {
 
 export function getSettingDefinitions(tab: WorkspacesPlusSettingsTab): SettingDefinitionItem[] {
   if (!tab.plugin.utils.isNativePluginEnabled) {
-    return [{ name: "Please enable the workspaces plugin under core plugins before using this plugin" }];
+    return [{ name: "请先在「设置 → 核心插件」中启用「工作区」。" }];
   }
 
   const { workspaces } = tab.plugin.workspacePlugin;
@@ -43,9 +44,10 @@ export function getSettingDefinitions(tab: WorkspacesPlusSettingsTab): SettingDe
     .map(name => buildModePage(name));
 
   return [
+    personalSettingDefinitions(tab.plugin),
     {
       type: "group",
-      heading: "Quick switcher",
+      heading: "快速切换",
       items: [
         {
           name: TOGGLE_TEXT.showInstructions.name,
@@ -93,13 +95,13 @@ export function getSettingDefinitions(tab: WorkspacesPlusSettingsTab): SettingDe
     },
     {
       type: "group",
-      heading: "Workspace enhancements",
+      heading: "工作区增强",
       items: [
         {
           // "(beta)" appended here rather than shared -- display() renders the badge as a
           // separate DOM span instead of plain text; see the comment on TOGGLE_TEXT in
           // settings.ts.
-          name: "Workspace modes (beta)",
+          name: "工作区模式（测试功能）",
           desc: TOGGLE_TEXT.workspaceSettings.desc,
           control: { type: "toggle", key: "workspaceSettings" },
         },
@@ -144,19 +146,19 @@ export function getSettingDefinitions(tab: WorkspacesPlusSettingsTab): SettingDe
     },
     {
       type: "group",
-      heading: "Workspaces",
+      heading: "工作区列表",
       extraButtons: [
         button =>
           button
             .setIcon("plus")
-            .setTooltip("Create a new blank workspace")
+            .setTooltip("新建空白工作区")
             .onClick(() => {
               // No name option supplied, so this can't fail (see createBlankWorkspace's own
               // comment) -- checked anyway since its return type no longer lets `name` be read
               // without narrowing on `success` first.
               const result = tab.plugin.utils.createBlankWorkspace();
               if (!result.success) return;
-              new Notice(`Created workspace "${result.name}" -- click it below to rename or configure it.`);
+              new Notice(`已创建工作区「${result.name}」，可在下方重命名或配置。`);
               tab.update();
             }),
       ],
@@ -164,7 +166,7 @@ export function getSettingDefinitions(tab: WorkspacesPlusSettingsTab): SettingDe
     },
     {
       type: "group",
-      heading: "Modes",
+      heading: "模式列表",
       items: modePages,
       visible: () => tab.plugin.settings.workspaceSettings,
     },
@@ -210,27 +212,28 @@ function buildWorkspacePage(
     type: "page",
     name: workspaceName,
     items: [
+      ...personalWorkspaceDefinitions(tab.plugin, workspaceName, () => returnToTopLevel(tab)),
       {
-        name: "Workspace name",
-        desc: "Renaming here also reassigns any hotkey already set for this workspace.",
+        name: "工作区名称",
+        desc: "重命名时会同步迁移本插件已绑定的快捷键。",
         render: setting => buildWorkspaceRenameSetting(setting, tab.plugin, workspaceName, () => returnToTopLevel(tab)),
       },
       {
-        name: "Workspace description",
+        name: "工作区说明",
         control: { type: "text", key: `workspace-description:${encodeURIComponent(workspaceName)}` },
       },
       {
-        name: "Workspace icon",
-        desc: "Shown next to the workspace name in the quick switcher. Leave blank to use the default icon.",
+        name: "工作区图标",
+        desc: "显示在切换列表的工作区名称旁；留空使用默认图标。",
         render: setting => buildWorkspaceIconSetting(setting, tab.app, workspaceSettings, onSave),
       },
       {
-        name: "Workspace icon color",
+        name: "工作区图标颜色",
         render: setting => buildWorkspaceIconColorSetting(setting, workspaceSettings, onSave),
       },
-      { type: "group", heading: "File overrides", items: overrides },
+      { type: "group", heading: "标签页文件覆盖", items: overrides },
       {
-        name: "Delete this workspace",
+        name: "删除此工作区",
         render: setting => buildWorkspaceDeleteSetting(setting, tab.plugin, workspaceName, () => returnToTopLevel(tab)),
       },
     ],
@@ -243,7 +246,7 @@ function buildModePage(modeName: string): SettingDefinitionPage {
     name: modeName.replace(/^mode: /i, ""),
     items: [
       {
-        name: "Save and load left/right sidebar state",
+        name: "保存并恢复左右侧栏状态",
         control: { type: "toggle", key: `mode-save-sidebar:${encodeURIComponent(modeName)}` },
       },
     ],

@@ -14,6 +14,7 @@ import { createPopper, Instance as PopperInstance } from "@popperjs/core";
 import { WorkspacesPlusSettings, DEFAULT_WORKSPACE_ICON } from "./settings";
 import { createConfirmationDialog } from "./confirm";
 import WorkspacesPlus from "./main";
+import { orderedWorkspaceNames, summarizeLayout } from "./personalWorkspaces";
 
 const SETTINGS_ATTR = "workspaces-plus:settings-v1";
 
@@ -42,7 +43,7 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
   settings: WorkspacesPlusSettings;
   showInstructions: boolean = false;
   invokedViaHotkey: boolean;
-  emptyStateText: string = "No match found.";
+  emptyStateText: string = "没有匹配的工作区。";
   bgEl: HTMLElement;
   plugin: WorkspacesPlus;
 
@@ -55,7 +56,7 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
     this.settings = settings;
     this.invokedViaHotkey = hotkey;
     this.workspacePlugin = this.app.internalPlugins.getPluginById("workspaces").instance as WorkspacePluginInstance;
-    this.setPlaceholder("Type workspace name...");
+    this.setPlaceholder("输入工作区名称…");
     this.buildInstructions();
 
     // temporary styling to force a transparent modal background to address certain themes
@@ -96,7 +97,7 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
     const el = this.chooser.containerEl.querySelector(".suggestion-empty");
     el.createEl("button", {
       cls: "list-item-part",
-      text: "Save as new workspace",
+      text: "将当前布局另存为新工作区",
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Function.prototype.bind's TS overloads fall back to `any` for methods with more than a few params; this is a correctly-bound reference to a real prototype method
     }).addEventListener("click", this.saveAndStay.bind(this));
   }
@@ -104,8 +105,7 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
   setupScope(): void {
     this.scope.register([], "Escape", evt => this.onEscape(evt));
     this.scope.register([], "Enter", evt => this.useSelectedItem(evt));
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Function.prototype.bind's TS overloads fall back to `any` for methods with more than a few params; this is a correctly-bound reference to a real prototype method
-    this.scope.register(["Shift"], "Delete", this.deleteWorkspace.bind(this));
+    this.scope.register(["Shift"], "Delete", () => { this.deleteWorkspace(); return false; });
     this.scope.register(["Ctrl"], "Enter", evt => this.onRenameClick(evt, null));
     this.scope.register(["Shift"], "Enter", evt => this.useSelectedItem(evt));
     this.scope.register(["Alt"], "Enter", evt => this.useSelectedItem(evt));
@@ -163,43 +163,43 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
         instructions = [
           {
             command: "shift ↵",
-            purpose: "save",
+            purpose: "保存",
           },
           {
             command: "alt ↵",
-            purpose: "save and switch",
+            purpose: "保存并切换",
           },
         ];
       } else {
         instructions = [
           {
             command: "↵",
-            purpose: "switch",
+            purpose: "切换",
           },
         ];
       }
       if (this.settings.workspaceBadges === "number") {
         instructions.push({
           command: "1-9",
-          purpose: "quick switch",
+          purpose: "快速切换",
         });
       }
       instructions.push(
         {
           command: "ctrl ↵",
-          purpose: "rename",
+          purpose: "重命名",
         },
         {
           command: "shift ⌫",
-          purpose: "delete",
+          purpose: "删除",
         },
         {
           command: "ctrl ,",
-          purpose: "settings",
+          purpose: "设置",
         },
         {
           command: "esc",
-          purpose: "cancel",
+          purpose: "取消",
         }
       );
       this.setInstructions(instructions);
@@ -354,7 +354,7 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
       this.handleRename(targetEl);
       return;
     }
-    let workspaceName = this.inputEl.value ? this.inputEl.value : this.chooser.values[this.chooser.selectedItem].item;
+    let workspaceName = this.inputEl.value || this.chooser.values?.[this.chooser.selectedItem]?.item;
     if (workspaceName && evt.shiftKey) {
       this.saveAndStay();
       // if (!/^mode:/i.test(workspaceName)) this.setWorkspace(workspaceName);
@@ -366,33 +366,35 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
   };
 
   saveAndStay(): void {
-    let workspaceName = this.inputEl.value ? this.inputEl.value : this.chooser.values[this.chooser.selectedItem].item;
+    let workspaceName = this.inputEl.value.trim() || this.chooser.values?.[this.chooser.selectedItem]?.item;
+    if (!workspaceName) { new Notice("请输入工作区名称。"); return; }
     this.workspacePlugin.saveWorkspace(workspaceName);
     this.chooser.chooser.updateSuggestions();
     if (!/^mode:/i.test(workspaceName)) this.setWorkspace(workspaceName);
-    new Notice("Successfully saved workspace: " + workspaceName);
+    new Notice("已保存工作区：" + workspaceName);
     this.close();
   }
 
   saveAndSwitch(): void {
     this.workspacePlugin.saveWorkspace(this.activeWorkspace);
     this.plugin.registerWorkspaceHotkeys();
-    new Notice("Successfully saved workspace: " + this.activeWorkspace);
+    new Notice("已保存工作区：" + this.activeWorkspace);
   }
 
   deleteWorkspace(workspaceName: string = null): void {
     if (!workspaceName) {
       let currentSelection = this.chooser.selectedItem;
-      workspaceName = this.chooser.values[currentSelection].item;
+      workspaceName = this.chooser.values?.[currentSelection]?.item;
     }
+    if (!workspaceName) return;
     if (this.settings.showDeletePrompt) {
       createConfirmationDialog(this.app, {
-        cta: "Delete",
+        cta: "删除",
         onAccept: async () => {
           this.doDelete(workspaceName);
         },
-        text: `Do you really want to delete the '` + workspaceName + `' workspace?`,
-        title: "Workspace Delete Confirmation",
+        text: `确定删除工作区「${workspaceName}」？`,
+        title: "确认删除工作区",
       });
     } else {
       this.doDelete(workspaceName);
@@ -408,8 +410,10 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
     // inner div instead, and treating that as the row's wrapper corrupted the row's structure
     // (descriptions/badges nested one level too deep instead of alongside the name) whenever a row
     // got re-rendered a second time, which threw off position-based numbering for other rows too.
-    const existingEl = resultEl.querySelector<HTMLElement>('.workspace-results[data-workspace-name="' + workspaceName + '"]');
+    const existingEl = Array.from(resultEl.querySelectorAll<HTMLElement>(".workspace-results"))
+      .find(row => row.dataset.workspaceName === workspaceName);
     const wrapperEl = existingEl ?? this.wrapSuggestion(el, resultEl);
+    wrapperEl.querySelectorAll(".workspace-description, .workspace-layout-summary, .workspace-favorite, .workspace-badge, .workspace-icon").forEach(node => node.remove());
     this.addDescription(wrapperEl, workspaceName);
     this.addBadge(wrapperEl, workspaceName);
     this.addWorkspaceIcon(wrapperEl, workspaceName);
@@ -423,7 +427,7 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
   // available yet at this point; see the comment there.)
   addBadge(wrapperEl: HTMLElement, workspaceName: string): void {
     if (this.settings.workspaceBadges === "number") return;
-    const hotkeys = this.plugin.app.hotkeyManager.getHotkeys(`${this.plugin.manifest.id}:${workspaceName}`);
+    const hotkeys = this.plugin.app.hotkeyManager.getHotkeys(`${this.plugin.manifest.id}:obsidian-yuhanbo-load-${workspaceName}`);
     if (!hotkeys?.length) return;
     const badgeEl = this.getRowEndEl(wrapperEl).createDiv("workspace-badge");
     badgeEl.textContent = formatHotkey(hotkeys[0]);
@@ -467,6 +471,13 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
   }
 
   addDescription(wrapperEl: HTMLElement, workspaceName: string): void {
+    if (this.settings.showLayoutSummary) {
+      wrapperEl.createDiv({ cls: "workspace-layout-summary", text: summarizeLayout(this.workspacePlugin.workspaces[workspaceName]) });
+    }
+    if (this.settings.favoriteWorkspaces.includes(workspaceName)) {
+      const star = this.getRowEndEl(wrapperEl).createDiv({ cls: "workspace-favorite", attr: { "aria-label": "已收藏" } });
+      setIcon(star, "star");
+    }
     if (!this.settings.showWorkspaceDescriptions) return;
     let description;
     try {
@@ -515,11 +526,7 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
   }
 
   getItems(): string[] {
-    return [
-      ...Object.keys(this.workspacePlugin.workspaces)
-        .filter(workspace => !/^mode:/i.test(workspace))
-        .sort(),
-    ];
+    return orderedWorkspaceNames(Object.keys(this.workspacePlugin.workspaces), this.settings);
   }
 
   getItemText(item: string): string {

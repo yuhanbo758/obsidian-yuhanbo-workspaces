@@ -13,6 +13,9 @@ import {
 import { FileSuggest } from "./suggesters/fileSuggest";
 import { IconSuggest } from "./suggesters/iconSuggest";
 import { createConfirmationDialog } from "./confirm";
+import { PERSONAL_DEFAULTS, summarizeLayout } from "./personalWorkspaces";
+import type { PersonalWorkspaceSettings } from "./personalWorkspaces";
+import { buildPersonalSettings, buildFavoriteSetting, buildDuplicateSetting } from "./personalWorkspaceUI";
 import {
   getSettingDefinitions as declarativeGetSettingDefinitions,
   getControlValue as declarativeGetControlValue,
@@ -33,13 +36,13 @@ interface ToggleText {
 export type WorkspaceBadgeMode = "hotkey" | "number";
 
 export const WORKSPACE_BADGE_OPTIONS: Record<WorkspaceBadgeMode, string> = {
-  hotkey: "Custom hotkeys",
-  number: "Number keys (1-9)",
+  hotkey: "自定义快捷键",
+  number: "数字键（1–9）",
 };
 
 export const WORKSPACE_BADGES_TEXT: ToggleText = {
-  name: "Workspace switcher badges",
-  desc: "Show each workspace's assigned hotkey, or a number (1-9) you can press to jump straight to it.",
+  name: "切换列表的快捷键标记",
+  desc: "显示已绑定的快捷键，或显示可直接按下的数字键（1–9）。",
 };
 
 // Falls back to this plugin's own existing default workspace icon (used for the status bar
@@ -51,7 +54,7 @@ export const DEFAULT_WORKSPACE_ICON = "pane-layout";
 // workspace's settings on its own; only picking a color (or resetting away from one) does that.
 export const DEFAULT_ICON_COLOR_SWATCH = "#888888";
 
-// Builds the "Workspace icon" control (a text field with icon-name autocomplete, plus a live
+// Builds the "工作区图标" control (a text field with icon-name autocomplete, plus a live
 // preview) shared between display() (pre-1.13.0) and getSettingDefinitions()'s render callback
 // (1.13.0+), so the two can't drift the way two independently hand-rolled UIs would.
 export function buildWorkspaceIconSetting(
@@ -95,7 +98,7 @@ export function buildWorkspaceIconColorSetting(setting: Setting, workspaceSettin
     .addExtraButton(button => {
       button
         .setIcon("rotate-ccw")
-        .setTooltip("Reset to default color")
+        .setTooltip("恢复默认颜色")
         .onClick(() => {
           delete workspaceSettings.iconColor;
           onSave();
@@ -126,7 +129,7 @@ export function buildWorkspaceRenameSetting(
       }
       const result = plugin.utils.renameWorkspace(workspaceName, newName);
       if (result.success) {
-        new Notice(`Renamed workspace to "${newName.trim()}"`);
+        new Notice(`工作区已重命名为「${newName.trim()}」。`);
         onRenamed();
       } else {
         if (result.reason) new Notice(result.reason);
@@ -158,23 +161,23 @@ export function buildWorkspaceDeleteSetting(
   setting
     .setDesc(
       isActive
-        ? "This cannot be undone. This is your current workspace, so deleting it will switch you to a different one."
-        : "This cannot be undone."
+        ? "删除后无法撤销；删除当前工作区会切换到其他工作区。"
+        : "删除后无法撤销，建议先创建配置备份。"
     )
     .addButton(button =>
       button
-        .setButtonText("Delete")
+        .setButtonText("删除")
         // setDestructive() would need minAppVersion 1.13.0, above this plugin's actual minimum
         // (1.8.7) -- setWarning() is deprecated in favor of it, but still the only destructive
         // button styling available across that whole supported range.
         .setWarning()
         .onClick(() => {
           createConfirmationDialog(plugin.app, {
-            cta: "Delete",
-            title: "Delete workspace",
+            cta: "删除",
+            title: "删除工作区",
             text: isActive
-              ? `Delete the "${workspaceName}" workspace? This is your current workspace, so deleting it will switch you to a different one.`
-              : `Delete the "${workspaceName}" workspace? This cannot be undone.`,
+              ? `确定删除当前工作区「${workspaceName}」？删除后会切换到其他工作区。`
+              : `确定删除工作区「${workspaceName}」？此操作无法撤销。`,
             onAccept: async () => {
               plugin.utils.deleteWorkspace(workspaceName);
               onDeleted();
@@ -189,81 +192,87 @@ export function buildWorkspaceDeleteSetting(
 // separately-structured implementations can't silently drift apart on wording. Keyed by the
 // WorkspacesPlusSettings property each toggle controls; "workspaceSettings" is the one
 // exception -- it only holds desc text here since display() renders its name with an extra
-// "beta" flair badge that has no equivalent in the declarative API's string-only name field.
+// "测试功能" flair badge that has no equivalent in the declarative API's string-only name field.
 export const TOGGLE_TEXT: Record<string, ToggleText> = {
   showInstructions: {
-    name: "Show instructions",
-    desc: "Show available keyboard shortcuts at the bottom of the workspace quick switcher",
+    name: "显示键盘操作提示",
+    desc: "在工作区切换窗口底部显示可用的键盘操作。",
   },
   showDeletePrompt: {
-    name: "Show workspace delete confirmation",
-    desc: "Show a confirmation prompt on workspace deletion",
+    name: "删除工作区前确认",
+    desc: "删除工作区时先显示确认提示。",
   },
   showWorkspaceDescriptions: {
-    name: "Show workspace descriptions in switcher",
-    desc: "Show each workspace's description (set under Per workspace below) beneath its name in the quick switcher.",
+    name: "在切换列表显示工作区说明",
+    desc: "在工作区名称下显示说明，可在下方的工作区设置中编辑。",
   },
   showWorkspaceIconInSwitcher: {
-    name: "Show workspace icon in quick switcher",
-    desc: "Show each workspace's icon (set under Per workspace below) next to its name in the quick switcher.",
+    name: "在切换列表显示工作区图标",
+    desc: "在工作区名称旁显示图标，可在下方的工作区设置中选择。",
   },
   showWorkspaceIconInStatusBar: {
-    name: "Show workspace icon in status bar",
-    desc: "Show the active workspace's icon (set under Per workspace below) in place of the default icon in the status bar.",
+    name: "在状态栏显示工作区图标",
+    desc: "状态栏使用当前工作区设置的图标。",
   },
-  workspaceSwitcherRibbon: { name: "Show workspace sidebar ribbon icon" },
-  replaceNativeRibbon: { name: "Hide the native workspace sidebar ribbon icon" },
-  modeSwitcherRibbon: { name: "Show workspace mode sidebar ribbon icon" },
+  workspaceSwitcherRibbon: { name: "显示工作区侧边工具栏按钮" },
+  replaceNativeRibbon: { name: "隐藏核心工作区工具栏按钮" },
+  modeSwitcherRibbon: { name: "显示模式侧边工具栏按钮" },
   workspaceSettings: {
     // name intentionally omitted -- display() renders its own name via createFragment (see
-    // below) to add the "beta" flair badge, and getSettingDefinitions() uses its own literal
-    // "Workspace modes (beta)" string since the declarative API's name field is string-only.
+    // below) to add the "测试功能" flair badge, and getSettingDefinitions() uses its own literal
+    // "工作区模式（测试功能）" string since the declarative API's name field is string-only.
     desc:
-      "Modes are a new type of workspace that store all of the native Obsidian editor, files & links, " +
-      "and appearance settings. Enabling this will add a new mode switcher to the status bar that will allow you " +
-      "to save, apply, rename, and switch between modes.",
+      "模式可保存 Obsidian 编辑器、文件与链接、" +
+      "外观等核心设置。启用后会在状态栏添加模式切换器，可" +
+      "保存、应用、重命名和切换模式（仅桌面端）。",
   },
   saveOnChange: {
-    name: "Auto save the current workspace on layout change",
+    name: "布局改变时自动保存当前工作区",
     desc:
-      "This option will auto save your current workspace on any layout change. " +
-      "Leave this disabled if you want full control over when your workspace is saved.",
+      "移动分栏、开关标签页或调整窗口时自动保存当前工作区。" +
+      "如需保留固定布局、手动保存，请关闭此项。",
   },
   preserveRibbon: {
-    name: "Preserve ribbon icons across workspaces",
-    desc: "Keep the current left ribbon icons and their order when switching workspaces instead of loading each workspace's saved ribbon state.",
+    name: "切换时保留侧边工具栏图标",
+    desc: "切换工作区时保留当前侧边工具栏图标及顺序。",
   },
   preserveSidebarLayout: {
-    name: "Preserve sidebar layout across workspaces",
-    desc: "Keep the current left and right sidebar panes, their arrangement, and view state when switching workspaces instead of loading each workspace's saved sidebar layout.",
+    name: "切换时保留左右侧栏布局",
+    desc: "切换工作区时保留当前左右侧栏的分栏、排列和视图状态。",
   },
   trackOpenFiles: {
-    name: "Automatically track and restore open files",
+    name: "记住并恢复打开的文件",
     desc:
-      "When enabled, workspaces will remember which files were open and restore them when you switch back. " +
-      "This preserves your exact layout and open notes across workspace switches.",
+      "保存工作区时记住各标签页的文件，切回时恢复。" +
+      "后台标签页继续按需加载，不会一次性初始化全部笔记。",
   },
   systemDarkMode: {
-    name: "Respect system dark mode setting",
-    desc: "Let the os determine the light/dark mode setting when switching modes. This setting can only be used if workspace modes is enabled.",
+    name: "跟随系统深色模式",
+    desc: "切换模式时跟随系统浅色或深色设置；需要先启用工作区模式。",
   },
   reloadLivePreview: {
-    name: "Automatically reload Obsidian on live preview setting change",
+    name: "实时预览设置改变时自动重载 Obsidian",
     desc:
-      "When switching between modes with different experimental live preview settings, reload Obsidian in order for the setting " +
-      "change to take effect. ⚠️note: Obsidian will reload automatically after changing workspaces, if needed, without any prompts.",
+      "切换模式导致实时预览设置改变时，重载 Obsidian 以使设置" +
+      "生效。启用后可能在切换时直接重载，请谨慎开启。",
   },
   restoreLayoutOnStartup: {
-    name: "Reload workspace layout on startup",
+    name: "启动时恢复上次工作区的已保存布局",
     desc:
-      "Reapply the last-used workspace's saved layout on every Obsidian launch, and when this plugin is toggled off and on " +
-      "again in Community Plugins, so the workspace switcher always agrees with what's on screen. ⚠️note: this discards any " +
-      "unsaved changes to the current layout in favor of that workspace's last-saved copy. Leave this disabled to let " +
-      "Obsidian's own session restore reopen whatever was on screen, unsaved changes included.",
+      "每次启动 Obsidian 或重新启用本插件时，重新应用上次工作区的已保存布局。" +
+      "这会让工作区名称与布局一致，但会放弃" +
+      "上次未保存的布局变化。关闭后使用" +
+      "Obsidian 自身的会话恢复，保留未保存的布局变化。",
   },
 };
 
-export class WorkspacesPlusSettings {
+export class WorkspacesPlusSettings implements PersonalWorkspaceSettings {
+  favoriteWorkspaces: PersonalWorkspaceSettings["favoriteWorkspaces"];
+  recentWorkspaces: PersonalWorkspaceSettings["recentWorkspaces"];
+  workspaceSort: PersonalWorkspaceSettings["workspaceSort"];
+  showLayoutSummary: boolean;
+  backupLimit: number;
+  workspaceBackups: PersonalWorkspaceSettings["workspaceBackups"];
   showInstructions: boolean;
   showDeletePrompt: boolean;
   showWorkspaceDescriptions: boolean;
@@ -288,6 +297,7 @@ export class WorkspacesPlusSettings {
 }
 
 export const DEFAULT_SETTINGS: WorkspacesPlusSettings = {
+  ...PERSONAL_DEFAULTS,
   showInstructions: true,
   showDeletePrompt: true,
   showWorkspaceDescriptions: false,
@@ -350,11 +360,12 @@ export class WorkspacesPlusSettingsTab extends PluginSettingTab {
 
     if (!this.plugin.utils.isNativePluginEnabled) {
       new Setting(containerEl)
-        .setName("Please enable the workspaces plugin under core plugins before using this plugin")
+        .setName("请先在「设置 → 核心插件」中启用「工作区」。")
         .setHeading();
       return;
     }
-    new Setting(containerEl).setName("Quick switcher").setHeading();
+    buildPersonalSettings(containerEl, this.plugin);
+    new Setting(containerEl).setName("快速切换").setHeading();
     new Setting(containerEl)
       .setName(TOGGLE_TEXT.showInstructions.name)
       .setDesc(TOGGLE_TEXT.showInstructions.desc)
@@ -451,21 +462,21 @@ export class WorkspacesPlusSettingsTab extends PluginSettingTab {
         );
     }
 
-    new Setting(containerEl).setName("Workspace enhancements").setHeading();
+    new Setting(containerEl).setName("工作区增强").setHeading();
 
     new Setting(containerEl)
       .setName(
         createFragment(function (e) {
-          e.appendText("Workspace Modes");
+          e.appendText("工作区模式");
           e.createSpan({
             cls: "flair mod-pop",
-            text: "beta",
+            text: "测试功能",
           });
         })
       )
       .setDesc(
         this.plugin.app.isMobile
-          ? "Workspace modes are desktop only -- they snapshot and restore Obsidian's core config, which is shared with mobile and would overwrite mobile-specific settings. Plain workspace switching works normally on mobile."
+          ? "模式仅支持桌面端，因为它会保存和恢复核心设置，可能覆盖移动端专属设置。移动端仍可正常切换普通工作区。"
           : TOGGLE_TEXT.workspaceSettings.desc
       )
       .then(setting => {
@@ -558,19 +569,19 @@ export class WorkspacesPlusSettingsTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Workspaces")
+      .setName("工作区列表")
       .setHeading()
       .addExtraButton(button =>
         button
           .setIcon("plus")
-          .setTooltip("Create a new blank workspace")
+          .setTooltip("新建空白工作区")
           .onClick(() => {
             // No name option supplied, so this can't fail (see createBlankWorkspace's own
             // comment) -- checked anyway since its return type no longer lets `name` be read
             // without narrowing on `success` first.
             const result = this.plugin.utils.createBlankWorkspace();
             if (!result.success) return;
-            new Notice(`Created workspace "${result.name}" -- click it below to rename or configure it.`);
+            new Notice(`已创建工作区「${result.name}」，可在下方重命名或配置。`);
             this.renderSettings();
           })
       );
@@ -606,13 +617,16 @@ export class WorkspacesPlusSettingsTab extends PluginSettingTab {
           });
         });
       const subContainerEL = containerEl.createDiv({ cls: "settings-container" });
+      new Setting(subContainerEL).setName("布局规模").setDesc(summarizeLayout(workspace));
+      buildFavoriteSetting(new Setting(subContainerEL).setName("收藏此工作区"), this.plugin, workspaceName);
+      buildDuplicateSetting(new Setting(subContainerEL).setName("复制工作区"), this.plugin, workspaceName, () => this.renderSettings());
       new Setting(subContainerEL)
-        .setName("Workspace name")
-        .setDesc("Renaming here also reassigns any hotkey already set for this workspace.")
+        .setName("工作区名称")
+        .setDesc("重命名时会同步迁移本插件已绑定的快捷键。")
         .then(setting =>
           buildWorkspaceRenameSetting(setting, this.plugin, workspaceName, () => this.renderSettings())
         );
-      new Setting(subContainerEL).setName("Workspace description").addText(textfield => {
+      new Setting(subContainerEL).setName("工作区说明").addText(textfield => {
         textfield.inputEl.type = "text";
         textfield.inputEl.parentElement?.addClass("search-input-container");
         textfield.setValue(String(workspaceSettings?.description ?? ""));
@@ -623,14 +637,14 @@ export class WorkspacesPlusSettingsTab extends PluginSettingTab {
       });
 
       new Setting(subContainerEL)
-        .setName("Workspace icon")
-        .setDesc("Shown next to the workspace name in the quick switcher. Leave blank to use the default icon.")
+        .setName("工作区图标")
+        .setDesc("显示在切换列表的工作区名称旁；留空使用默认图标。")
         .then(setting =>
           buildWorkspaceIconSetting(setting, this.app, workspaceSettings, () => this.plugin.workspacePlugin.saveData())
         );
 
       new Setting(subContainerEL)
-        .setName("Workspace icon color")
+        .setName("工作区图标颜色")
         .then(setting => buildWorkspaceIconColorSetting(setting, workspaceSettings, () => this.plugin.workspacePlugin.saveData()));
 
       // new Setting(containerEl)
@@ -643,7 +657,7 @@ export class WorkspacesPlusSettingsTab extends PluginSettingTab {
       //     })
       //   );
 
-      new Setting(subContainerEL).setHeading().setName("File overrides");
+      new Setting(subContainerEL).setHeading().setName("标签页文件覆盖");
 
       // Leaves without an id can't be targeted by setChildId (it matches on split.id ===
       // leafId), so an override entry keyed by a missing id could never actually apply --
@@ -678,11 +692,11 @@ export class WorkspacesPlusSettingsTab extends PluginSettingTab {
       });
 
       new Setting(subContainerEL)
-        .setName("Delete this workspace")
+        .setName("删除此工作区")
         .then(setting => buildWorkspaceDeleteSetting(setting, this.plugin, workspaceName, () => this.renderSettings()));
     });
 
-    new Setting(containerEl).setName("Modes").setHeading().setClass("requires-workspace-modes");
+    new Setting(containerEl).setName("模式列表").setHeading().setClass("requires-workspace-modes");
 
     Object.entries(workspaces).forEach(entry => {
       const [modeName] = entry;
@@ -713,7 +727,7 @@ export class WorkspacesPlusSettingsTab extends PluginSettingTab {
       const subContainerEL = containerEl.createDiv({ cls: "settings-container" });
 
       new Setting(subContainerEL)
-        .setName(`Save and load left/right sidebar state`)
+        .setName(`保存并恢复左右侧栏状态`)
         .setClass("requires-workspace-modes")
         // .setDesc(``)
         .addToggle(toggle =>

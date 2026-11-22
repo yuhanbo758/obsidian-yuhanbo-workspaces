@@ -41,6 +41,8 @@ const output = ts.transpileModule(source, {
 
 const noop = () => {};
 const stubs = {
+  "./personalWorkspaces": require("./loadPersonalModule"),
+  "./personalWorkspaceUI": {},
   obsidian: { Plugin: class {}, setIcon: noop, Notice: class {}, debounce: fn => fn },
   "./settings": { DEFAULT_SETTINGS, WorkspacesPlusSettingsTab: class {} },
   "./workspaceModal": { WorkspacesPlusPluginWorkspaceModal: class {} },

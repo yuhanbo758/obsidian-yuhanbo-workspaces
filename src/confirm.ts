@@ -19,7 +19,7 @@ export class ConfirmationModal extends Modal {
     e.id = "workspace-delete-confirm-dialog";
 
     this.contentEl.createDiv("modal-button-container", buttonsEl => {
-      buttonsEl.createEl("button", { text: "Cancel" }).addEventListener("click", () => this.close());
+      buttonsEl.createEl("button", { text: "取消" }).addEventListener("click", () => this.close());
 
       const btnSumbit = buttonsEl.createEl("button", {
         attr: { type: "submit" },

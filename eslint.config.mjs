@@ -8,6 +8,8 @@ export default defineConfig(
     "main.js",
     "main.js.map",
     "tests",
+    "scripts/prepare-release.mjs",
+    "outputs",
     "package.json",
     "package-lock.json",
     "tsconfig.json",

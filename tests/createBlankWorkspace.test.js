@@ -1,5 +1,5 @@
 // Regression coverage for Utils.createBlankWorkspace(): the settings tab's "+" button relies on
-// its auto-numbering behavior (never a name collision there), and the "New workspace" dialog
+// its auto-numbering behavior (never a name collision there), and the "新建工作区" dialog
 // (newWorkspaceModal.ts) relies on its name-collision validation and icon/iconColor pass-through.
 // Neither path had any test coverage before this file.
 //
@@ -61,25 +61,25 @@ const check = (label, fn) => {
 
 console.log("Utils.createBlankWorkspace");
 
-check('no options -> auto-generates "New workspace" and persists it', () => {
+check('no options -> auto-generates "新建工作区" and persists it', () => {
   const { utils, workspacePlugin, savedDataCalls, registeredHotkeysCalls } = makeUtils();
   const result = utils.createBlankWorkspace();
   assert.strictEqual(result.success, true);
-  assert.strictEqual(result.name, "New workspace");
-  assert.ok(workspacePlugin.workspaces["New workspace"], "workspace should be added to the workspaces map");
+  assert.strictEqual(result.name, "新建工作区");
+  assert.ok(workspacePlugin.workspaces["新建工作区"], "workspace should be added to the workspaces map");
   assert.strictEqual(
-    workspacePlugin.workspaces["New workspace"].main.children[0].children[0].state.type,
+    workspacePlugin.workspaces["新建工作区"].main.children[0].children[0].state.type,
     "empty"
   );
   assert.strictEqual(savedDataCalls.length, 1);
   assert.strictEqual(registeredHotkeysCalls.length, 1);
 });
 
-check('auto-generated name is numbered past existing "New workspace" entries', () => {
-  const { utils } = makeUtils({ "New workspace": {}, "New workspace 2": {} });
+check('auto-generated name is numbered past existing "新建工作区" entries', () => {
+  const { utils } = makeUtils({ "新建工作区": {}, "新建工作区 2": {} });
   const result = utils.createBlankWorkspace();
   assert.strictEqual(result.success, true);
-  assert.strictEqual(result.name, "New workspace 3");
+  assert.strictEqual(result.name, "新建工作区 3");
 });
 
 check("explicit name colliding with an existing workspace is rejected without mutating anything", () => {

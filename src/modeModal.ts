@@ -13,7 +13,7 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
   settings: WorkspacesPlusSettings;
   showInstructions: boolean = false;
   invokedViaHotkey: boolean;
-  emptyStateText: string = "No match found";
+  emptyStateText: string = "没有匹配的模式。";
   bgEl: HTMLElement;
   plugin: WorkspacesPlus;
 
@@ -26,7 +26,7 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
     this.settings = settings;
     this.invokedViaHotkey = hotkey;
     this.workspacePlugin = this.app.internalPlugins.getPluginById("workspaces").instance as WorkspacePluginInstance;
-    this.setPlaceholder("Type mode name...");
+    this.setPlaceholder("输入模式名称…");
     this.buildInstructions();
 
     // temporary styling to force a transparent modal background to address certain themes
@@ -64,7 +64,7 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
     const el = this.chooser.containerEl.querySelector(".suggestion-empty");
     el.createEl("button", {
       cls: "list-item-part",
-      text: "Save as new mode",
+      text: "将当前设置另存为新模式",
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Function.prototype.bind's TS overloads fall back to `any` for methods with more than a few params; this is a correctly-bound reference to a real prototype method
     }).addEventListener("click", this.saveAndStay.bind(this));
   }
@@ -72,8 +72,7 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
   setupScope(): void {
     this.scope.register([], "Escape", evt => this.onEscape(evt));
     this.scope.register([], "Enter", evt => this.useSelectedItem(evt));
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Function.prototype.bind's TS overloads fall back to `any` for methods with more than a few params; this is a correctly-bound reference to a real prototype method
-    this.scope.register(["Shift"], "Delete", this.deleteWorkspace.bind(this));
+    this.scope.register(["Shift"], "Delete", () => { this.deleteWorkspace(); return false; });
     this.scope.register(["Ctrl"], "Enter", evt => this.onRenameClick(evt, null));
     this.scope.register(["Shift"], "Enter", evt => this.useSelectedItem(evt));
     this.scope.register(["Alt"], "Enter", evt => this.useSelectedItem(evt));
@@ -93,19 +92,19 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
       instructions = [
         {
           command: "↵",
-          purpose: "load",
+          purpose: "加载",
         },
         {
           command: "ctrl ↵",
-          purpose: "rename",
+          purpose: "重命名",
         },
         {
           command: "shift ⌫",
-          purpose: "delete",
+          purpose: "删除",
         },
         {
           command: "esc",
-          purpose: "cancel",
+          purpose: "取消",
         },
       ];
       this.setInstructions(instructions);
@@ -231,7 +230,7 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
       this.handleRename(targetEl);
       return;
     }
-    let workspaceName = this.inputEl.value ? this.inputEl.value : this.chooser.values[this.chooser.selectedItem].item;
+    let workspaceName = this.inputEl.value || this.chooser.values?.[this.chooser.selectedItem]?.item;
     if (workspaceName && evt.shiftKey) {
       this.saveAndStay();
       this.close();
@@ -242,25 +241,27 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
   };
 
   saveAndStay(): void {
-    let workspaceName = this.inputEl.value ? this.inputEl.value : this.chooser.values[this.chooser.selectedItem].item;
+    let workspaceName = this.inputEl.value.trim() || this.chooser.values?.[this.chooser.selectedItem]?.item;
+    if (!workspaceName) { new Notice("请输入模式名称。"); return; }
     this.workspacePlugin.saveWorkspace("Mode: " + workspaceName);
     this.chooser.chooser.updateSuggestions();
-    new Notice("Successfully saved mode: " + workspaceName);
+    new Notice("已保存模式：" + workspaceName);
   }
 
   deleteWorkspace(workspaceName: string = null): void {
     if (!workspaceName) {
       let currentSelection = this.chooser.selectedItem;
-      workspaceName = this.chooser.values[currentSelection].item;
+      workspaceName = this.chooser.values?.[currentSelection]?.item;
     }
+    if (!workspaceName) return;
     if (this.settings.showDeletePrompt) {
       createConfirmationDialog(this.app, {
-        cta: "Delete",
+        cta: "删除",
         onAccept: async () => {
           this.doDelete("Mode: " + workspaceName);
         },
-        text: `Do you really want to delete the '` + workspaceName + `' mode?`,
-        title: "Mode Delete Confirmation",
+        text: `确定删除模式「${workspaceName}」？`,
+        title: "确认删除模式",
       });
     } else {
       this.doDelete("Mode: " + workspaceName);
@@ -306,7 +307,7 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
 
   addRenameButton(wrapperEl: HTMLElement, el: HTMLElement): void {
     const renameIcon = wrapperEl.createDiv("rename-workspace");
-    renameIcon.setAttribute("aria-label", "Rename mode");
+    renameIcon.setAttribute("aria-label", "重命名模式");
     renameIcon.setAttribute("aria-label-position", "top");
     setIcon(renameIcon, "pencil");
     renameIcon.addEventListener("click", event => this.onRenameClick(event, el));
@@ -314,7 +315,7 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
 
   addDeleteButton(wrapperEl: HTMLElement): void {
     const deleteIcon = wrapperEl.createDiv("delete-workspace");
-    deleteIcon.setAttribute("aria-label", "Delete mode");
+    deleteIcon.setAttribute("aria-label", "删除模式");
     deleteIcon.setAttribute("aria-label-position", "top");
     setIcon(deleteIcon, "trash-2");
     deleteIcon.addEventListener("click", event => this.deleteWorkspace());

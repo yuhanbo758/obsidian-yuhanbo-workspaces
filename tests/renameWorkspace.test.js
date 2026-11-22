@@ -20,6 +20,8 @@ const ts = require("typescript");
 // --- load a modal file with stubbed imports --------------------------------
 const noop = () => {};
 const stubs = {
+  "./personalWorkspaces": require("./loadPersonalModule"),
+  "./personalWorkspaceUI": {},
   obsidian: { FuzzySuggestModal: class {}, Notice: class {}, Scope: class {}, setIcon: noop },
   "@popperjs/core": { createPopper: noop },
   "./settings": {},
@@ -55,6 +57,7 @@ const makeTargetEl = (workspaceName, typedText) => ({
 
 const makeModal = (Cls, workspaces, activeWorkspace) => {
   const modal = Object.create(Cls.prototype);
+  modal.settings = require("./loadPersonalModule").cloneWorkspace(require("./loadPersonalModule").PERSONAL_DEFAULTS);
   const renameEvents = [];
   modal.workspacePlugin = { workspaces };
   modal.activeWorkspace = activeWorkspace;
