@@ -1,7 +1,7 @@
 {
   "id": "yuhanbo-workspaces",
   "name": "yuhanbo-workspaces",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "minAppVersion": "1.8.7",
   "description": "管理和切换工作区，支持收藏、最近使用、布局规模提示、复制及本地配置备份，保留后台标签页按需加载.",
   "author": "余汉波；原作者 NothingIsLost、Johnny",
