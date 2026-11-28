@@ -660,21 +660,13 @@ export class WorkspacesPlusSettingsTab extends PluginSettingTab {
 
       new Setting(subContainerEL).setHeading().setName("标签页文件覆盖");
 
-      // Leaves without an id can't be targeted by setChildId (it matches on split.id ===
-      // leafId), so an override entry keyed by a missing id could never actually apply --
-      // skip rendering a control for them rather than let several such leaves collide on
-      // the same fileOverrides[""] entry.
-      getChildIds(workspace.main)
-        .filter(leaf => leaf.id)
-        .forEach(leaf => {
-        let currentFile: string;
-        if (workspaceSettings.fileOverrides && workspaceSettings.fileOverrides[leaf.id]) {
-          currentFile = workspaceSettings.fileOverrides[leaf.id];
-        } else {
-          currentFile = null;
-        }
+      for (const leaf of getChildIds(workspace.main)) {
+        // 缺少 ID 的标签页无法定位，不能把覆盖配置写入共用的空键。
+        const leafId = leaf.id;
+        if (!leafId) continue;
+        const currentFile = workspaceSettings.fileOverrides?.[leafId];
         new Setting(subContainerEL)
-          .setName(leaf.id)
+          .setName(leafId)
           .setClass("file-override")
           .addSearch(cb => {
             new FileSuggest(this.app, cb.inputEl);
@@ -686,11 +678,11 @@ export class WorkspacesPlusSettingsTab extends PluginSettingTab {
               // the workspace load function will look for overrides and apply them
               // need to create a function that can search for a leaf id and update it
               if (!workspaceSettings.fileOverrides) workspaceSettings.fileOverrides = {};
-              if (overrideFile) workspaceSettings.fileOverrides[leaf.id] = overrideFile;
-              else delete workspaceSettings.fileOverrides[leaf.id];
+              if (overrideFile) workspaceSettings.fileOverrides[leafId] = overrideFile;
+              else delete workspaceSettings.fileOverrides[leafId];
             });
           });
-      });
+      }
 
       new Setting(subContainerEL)
         .setName("删除此工作区")

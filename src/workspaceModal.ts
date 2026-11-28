@@ -326,16 +326,22 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
     targetEl.parentElement.parentElement.removeClass("renaming");
     const originalName = targetEl.dataset.workspaceName;
     const newName = targetEl.textContent?.trim();
-    // Bail out if the name is empty or unchanged. Without this guard, an unchanged
-    // rename does `workspaces[name] = workspaces[name]` (a no-op) and then
-    // `delete workspaces[name]`, wiping the workspace. See issue #69.
-    if (!newName || newName === originalName) {
+    // 行可能已刷新或被删除；重命名只修改仍存在的工作区。
+    const { workspaces } = this.workspacePlugin;
+    const workspace = originalName ? workspaces[originalName] : undefined;
+    if (!originalName || !workspace || !newName || newName === originalName) {
+      targetEl.textContent = originalName ?? "";
+      targetEl.contentEditable = "false";
+      return;
+    }
+    if (workspaces[newName]) {
+      new Notice(`工作区「${newName}」已存在。`);
       targetEl.textContent = originalName;
       targetEl.contentEditable = "false";
       return;
     }
-    this.workspacePlugin.workspaces[newName] = this.workspacePlugin.workspaces[originalName];
-    delete this.workspacePlugin.workspaces[originalName];
+    workspaces[newName] = workspace;
+    delete workspaces[originalName];
     if (originalName === this.activeWorkspace) {
       this.setWorkspace(newName);
       this.activeWorkspace = newName;

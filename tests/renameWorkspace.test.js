@@ -136,6 +136,28 @@ check("changed name is trimmed before renaming", () => {
   assert.strictEqual(modal.activeWorkspace, "Office");
 });
 
+check("renaming cannot replace an existing workspace", () => {
+  const workspaces = { Work: { id: "w" }, Home: { id: "h" } };
+  const modal = makeModal(WorkspaceModal, workspaces, "Work");
+  const el = makeTargetEl("Work", "Home");
+  modal.handleRename(el);
+  assert.deepStrictEqual(workspaces, { Work: { id: "w" }, Home: { id: "h" } });
+  assert.strictEqual(el.textContent, "Work");
+  assert.deepStrictEqual(modal.renameEvents, []);
+});
+
+check("a stale or missing workspace ID cannot create a blank saved workspace", () => {
+  const workspaces = { Home: { id: "h" } };
+  const modal = makeModal(WorkspaceModal, workspaces, "Home");
+  for (const missing of ["Deleted", undefined]) {
+    const el = makeTargetEl(missing, "Office");
+    modal.handleRename(el);
+    assert.strictEqual(el.contentEditable, "false");
+  }
+  assert.deepStrictEqual(workspaces, { Home: { id: "h" } });
+  assert.deepStrictEqual(modal.renameEvents, []);
+});
+
 // --- mode modal -------------------------------------------------------
 console.log("modeModal.handleRename");
 
