@@ -6,13 +6,13 @@ yuhanbo-workspaces is an independently maintained fork of Workspaces Plus by Not
 
 ## Installation
 
-1. Use Obsidian 1.8.7 or later and enable the built-in **Workspaces** feature under **Settings → Core plugins**.
-2. Install and enable **yuhanbo-workspaces** under **Settings → Community plugins**. For manual installation, download `main.js`, `manifest.json`, and `styles.css` from the [latest GitHub Release](https://github.com/yuhanbo758/obsidian-yuhanbo-workspaces/releases/latest) into your vault's `.obsidian/plugins/yuhanbo-workspaces/` directory. Preserve the existing `data.json` when updating. Reopen the vault and enable the plugin.
+1. Use Obsidian 1.8.7 or later and enable the built-in **Workspaces** feature under **Settings > Core plugins**.
+2. Install and enable **yuhanbo-workspaces** under **Settings > Community plugins**. For manual installation, download `main.js`, `manifest.json`, and `styles.css` from the [latest GitHub Release](https://github.com/yuhanbo758/obsidian-yuhanbo-workspaces/releases/latest) into your vault's `.obsidian/plugins/yuhanbo-workspaces/` directory. Preserve the existing `data.json` when updating. Reopen the vault and enable the plugin.
 3. Disable Workspaces Plus before enabling this fork so the two plugins do not manage the same workspace hooks.
 
 ## Usage
 
-Use the workspace switcher on the status bar or open it from the command palette (search for `打开工作区切换器`). On mobile, use the command palette or enable the optional ribbon button. Select a saved layout to switch.
+Use the workspace switcher on the status bar or open it from the command palette (see the Chinese guide for the command label). On mobile, use the command palette or enable the optional ribbon button. Select a saved layout to switch.
 
 - Favorites stay at the top of the switcher. Sort the remaining layouts by name or recent use.
 - The switcher counts tabs and Markdown notes across the saved layout, including floating windows. A layout with at least 30 notes shows a large-layout indicator.
@@ -46,43 +46,32 @@ GitHub Actions tests and builds the plugin before publishing a versioned Release
 Yuhanbo maintains this fork of [Workspaces Plus](https://github.com/jsmorabito/obsidian-workspaces-plus) by NothingIsLost and Johnny. Johnny granted [public permission](https://github.com/jsmorabito/obsidian-workspaces-plus/issues/150#issuecomment-7229491340) to publish this fork and its updates in the Obsidian community directory. The code is distributed under the [GPL-3.0 license](LICENSE).
 
 <!-- sanrenjz-promotion:start -->
-## 👨‍💻 作者信息
+## About the maintainer
 
-**余汉波** - 编程爱好者-量化交易和效率工具开发
+**Yuhanbo Yu** develops quantitative trading software and productivity tools.
 
 - **GitHub**: [@yuhanbo758](https://github.com/yuhanbo758)
-
 - **Email**: yuhanbo@sanrenjz.com
+- **Website**: [Sanrenjz](https://www.sanrenjz.com)
 
-- **Website**: [三人聚智](https://www.sanrenjz.com)
+## Related links
 
-## 🌐 相关链接
+- [Project website](https://www.sanrenjz.com)
+- [Online documentation](https://docs.sanrenjz.com) for finance, code, and libraries
+- [Plugin store](https://shop.sanrenjz.com) for open-source and proprietary software
 
-- 🏠 [项目主页](https://www.sanrenjz.com)
+## Contact and downloads
 
-- 📚 [在线文档](https://docs.sanrenjz.com)（财经、代码和库文档等）
+- [Contact Sanrenjz and Yuhanbo](https://www.sanrenjz.com/contact_us/)
+- [Brokerage account information in Chinese](https://docs.sanrenjz.com/article/%E8%AF%81%E5%88%B8%E5%BC%80%E6%88%B7%E5%85%8D5%20%E4%B8%870.854%EF%BC%8C%E6%97%A0%E9%97%A8%E6%A7%9B%E5%BC%80%E9%87%8F%E5%8C%96QMT%EF%BC%8C%E9%80%81%E6%A1%86%E6%9E%B6%E7%AD%96%E7%95%A5%EF%BC%8C%E6%94%AF%E6%8C%81VIP%E5%BF%AB%E9%80%9F%E9%80%9A%E9%81%93%EF%BC%8C%E4%B9%9F%E5%8F%AF%E5%BC%80Ptrade) (WeChat: yuhanbo758)
+- [Download Sanrenjz](https://www.sanrenjz.com/sanrenjz/)
+- [Download Codebot](https://www.sanrenjz.com/sanrenjz-codebot/)
 
-- 🛒 [插件商店](https://shop.sanrenjz.com)（所有程序，包括开源和不开源）
+![Contact QR codes](https://gdsx.sanrenjz.com/image/sanrenjz_yuhanbolh_yuhanbo758.png?imageSlim&t=1ab9b82c-e220-8022-beff-e265a194292a)
 
+![Donation QR codes](https://gdsx.sanrenjz.com/image/%E6%89%93%E8%B5%8F%E7%A0%81%E5%90%88%E4%B8%80.png?imageSlim)
 
-## 联系我们
+## Thanks
 
-[联系我们 - 三人聚智-余汉波](https://www.sanrenjz.com/contact_us/)
-
-证券开户（+V：yuhanbo758）：[证券开户免5万0.854，无门槛开量化QMT，送框架策略，支持VIP快速通道，也可开Ptrade | 余汉波 文档](https://docs.sanrenjz.com/article/%E8%AF%81%E5%88%B8%E5%BC%80%E6%88%B7%E5%85%8D5%20%E4%B8%870.854%EF%BC%8C%E6%97%A0%E9%97%A8%E6%A7%9B%E5%BC%80%E9%87%8F%E5%8C%96QMT%EF%BC%8C%E9%80%81%E6%A1%86%E6%9E%B6%E7%AD%96%E7%95%A5%EF%BC%8C%E6%94%AF%E6%8C%81VIP%E5%BF%AB%E9%80%9F%E9%80%9A%E9%81%93%EF%BC%8C%E4%B9%9F%E5%8F%AF%E5%BC%80Ptrade)
-
-三人聚智下载：[sanrenjz - 三人聚智](https://www.sanrenjz.com/sanrenjz/)
-
-codebot 下载：[sanrenjz-codebot - 三人聚智-余汉波](https://www.sanrenjz.com/sanrenjz-codebot/)
-
-![三码合一](https://gdsx.sanrenjz.com/image/sanrenjz_yuhanbolh_yuhanbo758.png?imageSlim&t=1ab9b82c-e220-8022-beff-e265a194292a)
-
-![余汉波打赏码](https://gdsx.sanrenjz.com/image/%E6%89%93%E8%B5%8F%E7%A0%81%E5%90%88%E4%B8%80.png?imageSlim)
-
-## 🙏 致谢
-
-感谢所有为本项目贡献代码和想法的开发者们！
-
----
-**⭐ 如果这个项目对您有帮助，请给它一个 Star！**
+Thank you to the developers who contributed code and ideas. If this project helps you, consider giving it a star on GitHub.
 <!-- sanrenjz-promotion:end -->
