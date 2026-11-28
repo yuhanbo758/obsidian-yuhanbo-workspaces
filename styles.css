@@ -3,9 +3,9 @@
   z-index: var(--layer-menu);
 }
 
-/* Workaround for themes that style the modal container instead of .modal-bg */
-.workspaces-plus-transparent-bg-important {
-  background-color: transparent !important;
+/* 提高切换器背景选择器的优先级，覆盖主题对模态容器设置的背景。 */
+body .modal-container.workspaces-plus-transparent-bg-important {
+  background-color: transparent;
 }
 
 .workspaces-plus-transparent-bg {

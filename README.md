@@ -78,6 +78,20 @@ Workspaces Plus 的维护者 Johnny 已公开授权本衍生版本提交至 Obsi
 - [Obsidian API](https://github.com/obsidianmd/obsidian-api)
 - [Obsidian 开发文档](https://docs.obsidian.md/Home)
 
+## English overview
+
+yuhanbo-workspaces is an independently maintained fork of Workspaces Plus by NothingIsLost and Johnny. It provides a Chinese interface for managing saved workspaces, with favorites, recent-use sorting, layout copies, and local configuration backups. Background tabs remain deferred until opened.
+
+### Installation
+
+1. Use Obsidian 1.8.7 or later and enable the built-in **Workspaces** feature under **Settings → Core plugins**.
+2. Install and enable **yuhanbo-workspaces** under **Settings → Community plugins** when available. For manual installation, download `main.js`, `manifest.json`, and `styles.css` from the [latest GitHub Release](https://github.com/yuhanbo758/obsidian-yuhanbo-workspaces/releases/latest) into your vault's `.obsidian/plugins/yuhanbo-workspaces/` directory. Reopen the vault and enable the plugin.
+3. Disable Workspaces Plus before enabling this fork so the two plugins do not manage the same workspace hooks.
+
+### Usage
+
+Use the workspace switcher on the status bar or open it from the command palette (search for `打开工作区切换器`). Select a saved layout to switch. Use the plugin settings to favorite, copy, back up, or restore saved workspaces. File and folder suggestions search names and paths within the current vault when you configure file overrides. Workspace data stays in the vault. The plugin makes no network requests and requires no account.
+
 <!-- sanrenjz-promotion:start -->
 ## 👨‍💻 作者信息
 
