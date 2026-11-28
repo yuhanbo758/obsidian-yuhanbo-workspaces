@@ -1,4 +1,6 @@
-import { AbstractInputSuggest, App, TAbstractFile, TFile, TFolder } from "obsidian";
+import { AbstractInputSuggest, App, normalizePath, TFile, TFolder } from "obsidian";
+
+const MAX_SUGGESTIONS = 30;
 
 export class FileSuggest extends AbstractInputSuggest<TFile> {
   constructor(app: App, private inputEl: HTMLInputElement) {
@@ -6,15 +8,34 @@ export class FileSuggest extends AbstractInputSuggest<TFile> {
   }
 
   getSuggestions(inputStr: string): TFile[] {
-    const abstractFiles = this.app.vault.getAllLoadedFiles();
-    const files: TFile[] = [];
-    const lowerCaseInputStr = inputStr.toLowerCase();
+    const query = inputStr.trim().replace(/\\/g, "/");
+    if (!query) return [];
 
-    abstractFiles.forEach((file: TAbstractFile) => {
-      if (file instanceof TFile && file.extension === "md" && file.path.toLowerCase().contains(lowerCaseInputStr)) {
-        files.push(file);
+    const { vault } = this.app;
+    const path = normalizePath(query);
+    const exact = vault.getFileByPath(path);
+    if (exact?.extension === "md") return [exact];
+
+    // 已指定文件夹时只搜索该目录；其他查询按需匹配，达到上限就停止。
+    const slash = query.lastIndexOf("/");
+    const folder = slash > 0 ? vault.getFolderByPath(normalizePath(query.slice(0, slash))) : null;
+    const needle = (folder ? query.slice(slash + 1) : query.replace(/^\/+/, "")).toLowerCase();
+    const pending = [folder ?? vault.getRoot()];
+    const files: TFile[] = [];
+    while (pending.length > 0) {
+      const current = pending.pop();
+      for (const entry of current.children) {
+        if (entry instanceof TFolder) {
+          pending.push(entry);
+        } else if (entry instanceof TFile && entry.extension === "md") {
+          const relativePath = folder ? entry.path.slice(folder.path.length + 1) : entry.path;
+          if (relativePath.toLowerCase().includes(needle)) {
+            files.push(entry);
+            if (files.length === MAX_SUGGESTIONS) return files;
+          }
+        }
       }
-    });
+    }
 
     return files;
   }
@@ -25,36 +46,6 @@ export class FileSuggest extends AbstractInputSuggest<TFile> {
 
   selectSuggestion(file: TFile): void {
     this.inputEl.value = file.path;
-    this.inputEl.trigger("input");
-    this.close();
-  }
-}
-
-export class FolderSuggest extends AbstractInputSuggest<TFolder> {
-  constructor(app: App, private inputEl: HTMLInputElement) {
-    super(app, inputEl);
-  }
-
-  getSuggestions(inputStr: string): TFolder[] {
-    const abstractFiles = this.app.vault.getAllLoadedFiles();
-    const folders: TFolder[] = [];
-    const lowerCaseInputStr = inputStr.toLowerCase();
-
-    abstractFiles.forEach((folder: TAbstractFile) => {
-      if (folder instanceof TFolder && folder.path.toLowerCase().contains(lowerCaseInputStr)) {
-        folders.push(folder);
-      }
-    });
-
-    return folders;
-  }
-
-  renderSuggestion(folder: TFolder, el: HTMLElement): void {
-    el.setText(folder.path);
-  }
-
-  selectSuggestion(folder: TFolder): void {
-    this.inputEl.value = folder.path;
     this.inputEl.trigger("input");
     this.close();
   }

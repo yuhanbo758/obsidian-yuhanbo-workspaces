@@ -5,7 +5,6 @@ import {
   Notice,
   Scope,
   setIcon,
-  WorkspaceCustomSettings,
   Hotkey,
   Modifier,
   Platform,
@@ -435,12 +434,7 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
 
   addWorkspaceIcon(wrapperEl: HTMLElement, workspaceName: string): void {
     if (!this.settings.showWorkspaceIconInSwitcher) return;
-    let workspaceSettings: WorkspaceCustomSettings;
-    try {
-      workspaceSettings = this.workspacePlugin.workspaces[workspaceName][SETTINGS_ATTR] as WorkspaceCustomSettings;
-    } catch {
-      // property chain may not exist yet, fall back to undefined
-    }
+    const workspaceSettings = this.workspacePlugin.workspaces[workspaceName]?.[SETTINGS_ATTR];
     const iconEl = wrapperEl.createDiv("workspace-icon");
     setIcon(iconEl, workspaceSettings?.icon || DEFAULT_WORKSPACE_ICON);
     if (workspaceSettings?.iconColor) iconEl.style.color = workspaceSettings.iconColor;
@@ -479,14 +473,7 @@ export class WorkspacesPlusPluginWorkspaceModal extends FuzzySuggestModal<string
       setIcon(star, "star");
     }
     if (!this.settings.showWorkspaceDescriptions) return;
-    let description;
-    try {
-      description = (this.workspacePlugin.workspaces[workspaceName][SETTINGS_ATTR] as WorkspaceCustomSettings)[
-        "description"
-      ];
-    } catch {
-      // property chain may not exist yet, fall back to undefined
-    }
+    const description = this.workspacePlugin.workspaces[workspaceName]?.[SETTINGS_ATTR]?.description;
     if (description) {
       const descEl = wrapperEl.createDiv("workspace-description");
       descEl.textContent = description;

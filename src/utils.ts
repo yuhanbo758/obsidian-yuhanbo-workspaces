@@ -60,7 +60,7 @@ function createSidebarLeaf (type: string, state: Record<string, unknown>, icon: 
 }
 
 export default class Utils {
-  SETTINGS_ATTR = "workspaces-plus:settings-v1";
+  readonly SETTINGS_ATTR = "workspaces-plus:settings-v1";
   workspacePlugin: WorkspacePluginInstance;
   app: App;
   plugin: WorkspacesPlus;
@@ -78,9 +78,7 @@ export default class Utils {
   getWorkspaceSettings (name: string): WorkspaceCustomSettings | null {
     const workspace = this.getWorkspace(name);
     if (!workspace) return null;
-    return (
-      workspace[this.SETTINGS_ATTR] ? workspace[this.SETTINGS_ATTR] : (workspace[this.SETTINGS_ATTR] = {})
-    ) as WorkspaceCustomSettings;
+    return (workspace[this.SETTINGS_ATTR] ||= {});
   }
 
   get activeModeName () {
@@ -103,7 +101,7 @@ export default class Utils {
   setWorkspaceSettings (name: string, settings: WorkspaceCustomSettings): WorkspaceCustomSettings {
     const workspace = this.getWorkspace(name);
     workspace[this.SETTINGS_ATTR] = settings;
-    return workspace[this.SETTINGS_ATTR] as WorkspaceCustomSettings;
+    return settings;
   }
 
   // Used by the settings tab's own rename control (see buildWorkspaceRenameSetting in

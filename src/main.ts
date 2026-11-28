@@ -721,10 +721,8 @@ export default class WorkspacesPlus extends Plugin {
           return function saveWorkspace(workspaceName, ...etc) {
             // TODO: Does this prevent saving a workspace with no name?
             if (!workspaceName || !plugin.isNativePluginEnabled) return;
-            let settings;
-            settings = plugin.utils.getWorkspaceSettings(workspaceName);
-            // old.call()'s TS typing falls back to `any` for this arity, same as bind() elsewhere in this codebase
-            const result = old.call(this, workspaceName, ...etc) as unknown;
+            const settings = plugin.utils.getWorkspaceSettings(workspaceName);
+            const result: unknown = old.call(this, workspaceName, ...etc);
             if (plugin.debug) console.debug("workspace saved: " + workspaceName);
             this.app.workspace.trigger("workspace-save", workspaceName, settings);
             return result;
@@ -733,8 +731,7 @@ export default class WorkspacesPlus extends Plugin {
         deleteWorkspace(old) {
           return function deleteWorkspace(workspaceName, ...etc) {
             if (!workspaceName || !plugin.isNativePluginEnabled) return;
-            // old.call()'s TS typing falls back to `any` for this arity, same as bind() elsewhere in this codebase
-            const result = old.call(this, workspaceName, ...etc) as unknown;
+            const result: unknown = old.call(this, workspaceName, ...etc);
             this.app.workspace.trigger("workspace-delete", workspaceName);
             return result;
           };

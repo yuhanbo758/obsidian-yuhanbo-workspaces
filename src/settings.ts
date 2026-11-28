@@ -4,6 +4,7 @@ import {
   ColorComponent,
   Notice,
   PluginSettingTab,
+  requireApiVersion,
   Setting,
   setIcon,
   WorkspaceCustomSettings,
@@ -164,27 +165,27 @@ export function buildWorkspaceDeleteSetting(
         ? "删除后无法撤销；删除当前工作区会切换到其他工作区。"
         : "删除后无法撤销，建议先创建配置备份。"
     )
-    .addButton(button =>
-      button
-        .setButtonText("删除")
-        // setDestructive() would need minAppVersion 1.13.0, above this plugin's actual minimum
-        // (1.8.7) -- setWarning() is deprecated in favor of it, but still the only destructive
-        // button styling available across that whole supported range.
-        .setWarning()
-        .onClick(() => {
-          createConfirmationDialog(plugin.app, {
-            cta: "删除",
-            title: "删除工作区",
-            text: isActive
-              ? `确定删除当前工作区「${workspaceName}」？删除后会切换到其他工作区。`
-              : `确定删除工作区「${workspaceName}」？此操作无法撤销。`,
-            onAccept: async () => {
-              plugin.utils.deleteWorkspace(workspaceName);
-              onDeleted();
-            },
-          });
-        })
-    );
+    .addButton(button => {
+      button.setButtonText("删除");
+      if (requireApiVersion("1.13.0")) {
+        button.setDestructive();
+      } else {
+        button.setClass("mod-warning");
+      }
+      button.onClick(() => {
+        createConfirmationDialog(plugin.app, {
+          cta: "删除",
+          title: "删除工作区",
+          text: isActive
+            ? `确定删除当前工作区「${workspaceName}」？删除后会切换到其他工作区。`
+            : `确定删除工作区「${workspaceName}」？此操作无法撤销。`,
+          onAccept: async () => {
+            plugin.utils.deleteWorkspace(workspaceName);
+            onDeleted();
+          },
+        });
+      });
+    });
 }
 
 // Shared name/desc text for the plugin's toggle settings, consumed by both display() (the

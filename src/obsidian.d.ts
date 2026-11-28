@@ -147,7 +147,8 @@ declare module "obsidian" {
     right?: WorkspaceLayoutNode;
     "left-ribbon"?: unknown;
     active?: string;
-    [x: string]: any; // includes the plugin's own settings key (workspaces-plus:settings-v1) and other internal/dynamic keys
+    "workspaces-plus:settings-v1"?: WorkspaceCustomSettings;
+    [key: string]: unknown;
   }
 
   // The recursive pane/split/tab layout tree Obsidian persists per workspace. Undocumented,

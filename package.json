@@ -1,12 +1,12 @@
 {
   "name": "obsidian-yuhanbo-workspaces",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "description": "中文工作区管理与多屏加载优化",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
     "build": "rollup --config rollup.config.js --environment BUILD:production",
-    "test": "node tests/workspaceCycle.test.js && node tests/mobileGating.test.js && node tests/renameWorkspace.test.js && node tests/sidebarSync.test.js && node tests/createBlankWorkspace.test.js && node tests/deferredLoading.test.js && node tests/personalWorkspaces.test.js && node tests/backupUI.test.js",
+    "test": "node tests/workspaceCycle.test.js && node tests/mobileGating.test.js && node tests/renameWorkspace.test.js && node tests/sidebarSync.test.js && node tests/createBlankWorkspace.test.js && node tests/deferredLoading.test.js && node tests/personalWorkspaces.test.js && node tests/backupUI.test.js && node tests/fileSuggest.test.js",
     "lint": "eslint .",
     "version": "node scripts/prepare-release.mjs --from-package && git add manifest.json manifest-beta.json versions.json package-lock.json",
     "typecheck": "tsc --noEmit"

@@ -1,4 +1,4 @@
-import { FuzzySuggestModal, WorkspacePluginInstance, FuzzyMatch, Notice, Scope, setIcon, WorkspaceCustomSettings } from "obsidian";
+import { FuzzySuggestModal, WorkspacePluginInstance, FuzzyMatch, Notice, Scope, setIcon } from "obsidian";
 import { createPopper, Instance as PopperInstance } from "@popperjs/core";
 import { WorkspacesPlusSettings } from "./settings";
 import { createConfirmationDialog } from "./confirm";
@@ -202,13 +202,10 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
     }
     const originalName = "Mode: " + originalBareName;
     const newName = "Mode: " + newBareName;
-    // let settings = this.workspacePlugin.workspaces[this.workspacePlugin.activeWorkspace][SETTINGS_ATTR];
-    // let currentMode = settings["mode"] ? settings["mode"] : null;
     for (const workspace of Object.values(this.workspacePlugin.workspaces)) {
-      let settings = workspace[SETTINGS_ATTR] as WorkspaceCustomSettings;
-      let mode = settings ? settings["mode"] : null;
-      if (mode && mode == originalName) {
-        (workspace[SETTINGS_ATTR] as WorkspaceCustomSettings)["mode"] = newName;
+      const settings = workspace[SETTINGS_ATTR];
+      if (settings?.mode === originalName) {
+        settings.mode = newName;
       }
     }
     this.workspacePlugin.workspaces[newName] = this.workspacePlugin.workspaces[originalName];
@@ -288,14 +285,8 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
     childEl.dataset.workspaceName = childEl.textContent;
     childEl.removeClass("suggestion-item");
     childEl.addClass("workspace-item");
-    let mode;
-    try {
-      mode = (
-        this.workspacePlugin.workspaces[this.workspacePlugin.activeWorkspace][SETTINGS_ATTR] as WorkspaceCustomSettings
-      )["mode"].replace(/^mode: /i, "");
-    } catch {
-      // property chain may not exist yet, fall back to undefined
-    }
+    const storedMode = this.workspacePlugin.workspaces[this.workspacePlugin.activeWorkspace]?.[SETTINGS_ATTR]?.mode;
+    const mode = typeof storedMode === "string" ? storedMode.replace(/^mode: /i, "") : undefined;
     if (childEl.textContent === mode) {
       const activeIcon = wrapperEl.createDiv("active-workspace");
       setIcon(activeIcon, "check");
@@ -351,11 +342,10 @@ export class WorkspacesPlusPluginModeModal extends FuzzySuggestModal<string> {
     this.chooser.chooser.updateSuggestions();
     this.chooser.setSelectedItem(currentSelection - 1, true);
     this.plugin.onWorkspaceDelete(workspaceName);
-    for (const [workspaceName, workspace] of Object.entries(this.workspacePlugin.workspaces)) {
-      let settings = workspace[SETTINGS_ATTR] as WorkspaceCustomSettings;
-      let mode = settings ? settings["mode"] : null;
-      if (mode && mode == workspaceName) {
-        (workspace[SETTINGS_ATTR] as WorkspaceCustomSettings)["mode"] = null;
+    for (const [name, workspace] of Object.entries(this.workspacePlugin.workspaces)) {
+      const settings = workspace[SETTINGS_ATTR];
+      if (settings?.mode === name) {
+        settings.mode = null;
       }
     }
   }

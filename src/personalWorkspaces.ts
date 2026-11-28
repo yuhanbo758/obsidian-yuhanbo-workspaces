@@ -63,7 +63,7 @@ export function summarizeLayout(workspace: Workspaces): string {
     Object.values(node).forEach(visit);
   }
   // 只统计布局树，不读取文件或实例化视图，也不把插件配置误算为布局。
-  for (const key of ["main", "left", "right", "floating"]) visit(workspace[key] as unknown);
+  for (const key of ["main", "left", "right", "floating"]) visit(workspace[key]);
   return `${leaves} 个标签页 · ${markdown} 个笔记${markdown >= 30 ? " · 大型布局" : ""}`;
 }
 
