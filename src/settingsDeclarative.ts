@@ -1,10 +1,5 @@
-// Obsidian's declarative settings API (getSettingDefinitions/getControlValue/setControlValue),
-// used by WorkspacesPlusSettingsTab on Obsidian 1.13.0+ only -- display() in settings.ts remains
-// the fallback for 1.8.7-1.12.x. Split into its own file (rather than living directly on the
-// class in settings.ts) purely so eslint.config.mjs's obsidianmd/no-unsupported-api override can
-// be scoped to just these 1.13.0+-only methods, instead of the whole settings.ts file -- that
-// keeps the check active for display() and the rest of the settings tab.
-import { Notice, PluginSettingTab } from "obsidian";
+// 声明式设置需要 Obsidian 1.13.0+。旧版本继续使用 settings.ts 的命令式设置页。
+import { Notice, PluginSettingTab, requireApiVersion } from "obsidian";
 import type { SettingDefinitionItem, SettingGroupItem, SettingDefinitionPage, Workspaces } from "obsidian";
 import type { WorkspacesPlusSettingsTab } from "./settings";
 import { personalSettingDefinitions, personalWorkspaceDefinitions } from "./personalWorkspaceUI";
@@ -19,15 +14,9 @@ import {
   buildWorkspaceDeleteSetting,
 } from "./settings";
 
-// Called from main.ts after any workspace-list-changing action that doesn't already have a
-// direct reference to this tab's own instance -- e.g. the "新建空白工作区" command, which
-// (unlike everything else in this file) can run on any Obsidian version and outside the settings
-// tab's own context entirely. update() only exists on 1.13.0+, hence the optional-call cast
-// rather than calling it directly the way the rest of this file does (safe there only because
-// those call sites are themselves only ever reached once Obsidian has already chosen the
-// declarative renderer, i.e. only on 1.13.0+).
+// 也供可在旧客户端执行的工作区命令调用；旧版没有 update()。
 export function refreshIfDeclarative(tab: WorkspacesPlusSettingsTab): void {
-  (tab as unknown as { update?: () => void }).update?.();
+  if (requireApiVersion("1.13.0")) tab.update();
 }
 
 export function getSettingDefinitions(tab: WorkspacesPlusSettingsTab): SettingDefinitionItem[] {
@@ -159,7 +148,7 @@ export function getSettingDefinitions(tab: WorkspacesPlusSettingsTab): SettingDe
               const result = tab.plugin.utils.createBlankWorkspace();
               if (!result.success) return;
               new Notice(`已创建工作区「${result.name}」，可在下方重命名或配置。`);
-              tab.update();
+              refreshIfDeclarative(tab);
             }),
       ],
       items: workspacePages,
@@ -183,7 +172,7 @@ export function getSettingDefinitions(tab: WorkspacesPlusSettingsTab): SettingDe
 function returnToTopLevel(tab: WorkspacesPlusSettingsTab): void {
   tab.app.setting.open();
   tab.app.setting.openTabById(tab.plugin.manifest.id);
-  tab.update();
+  refreshIfDeclarative(tab);
 }
 
 function buildWorkspacePage(
@@ -275,12 +264,9 @@ export function getControlValue(tab: WorkspacesPlusSettingsTab, key: string): un
     const modeName = decodeURIComponent(key.slice("mode-save-sidebar:".length));
     return tab.plugin.utils.getModeSettings(modeName)?.saveSidebar ?? false;
   }
-  // Only ever invoked by Obsidian itself when getSettingDefinitions() is in play, i.e. on
-  // 1.13.0+; display() is the fallback for 1.8.7-1.12.x, where these methods are simply never
-  // called. Calling PluginSettingTab's own default implementation directly (rather than via
-  // `super`, which is only usable from inside WorkspacesPlusSettingsTab's own class body in
-  // settings.ts) keeps this 1.13.0+-only reference contained to this file.
-  return PluginSettingTab.prototype.getControlValue.call(tab, key);
+  if (requireApiVersion("1.13.0")) {
+    return PluginSettingTab.prototype.getControlValue.call(tab, key);
+  }
 }
 
 export function setControlValue(tab: WorkspacesPlusSettingsTab, key: string, value: unknown): void {
@@ -311,7 +297,9 @@ export function setControlValue(tab: WorkspacesPlusSettingsTab, key: string, val
     return;
   }
 
-  void PluginSettingTab.prototype.setControlValue.call(tab, key, value);
+  if (requireApiVersion("1.13.0")) {
+    void PluginSettingTab.prototype.setControlValue.call(tab, key, value);
+  }
 
   switch (key) {
     case "workspaceSwitcherRibbon":
@@ -329,7 +317,7 @@ export function setControlValue(tab: WorkspacesPlusSettingsTab, key: string, val
     case "workspaceSettings":
       if (value) tab.plugin.enableModesFeature();
       else tab.plugin.disableModesFeature();
-      tab.update();
+      refreshIfDeclarative(tab);
       break;
   }
 }

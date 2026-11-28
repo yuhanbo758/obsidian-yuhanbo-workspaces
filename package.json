@@ -1,6 +1,6 @@
 {
   "name": "obsidian-yuhanbo-workspaces",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "中文工作区管理与多屏加载优化",
   "main": "main.js",
   "scripts": {
@@ -33,5 +33,8 @@
   "dependencies": {
     "monkey-around": "^2.2.0",
     "obsidian-daily-notes-interface": "^0.9.4"
+  },
+  "overrides": {
+    "moment": "2.31.0"
   }
 }

@@ -739,13 +739,7 @@ export class WorkspacesPlusSettingsTab extends PluginSettingTab {
     });
   }
 
-  // Declarative settings API (Obsidian 1.13.0+). display() above remains the fallback for
-  // older versions (minAppVersion is 1.8.7) -- Obsidian only calls display() when
-  // getSettingDefinitions() returns an empty array, which is what the inherited default does
-  // on versions that predate this API entirely. The actual implementation lives in
-  // settingsDeclarative.ts (not here) so eslint.config.mjs's obsidianmd/no-unsupported-api
-  // override can be scoped to just that file instead of this whole one -- these three methods
-  // are the only things in this class that are 1.13.0+-only.
+  // 新客户端调用声明式设置；旧客户端仍走上面的 display()。
   getSettingDefinitions(): SettingDefinitionItem[] {
     return declarativeGetSettingDefinitions(this);
   }
