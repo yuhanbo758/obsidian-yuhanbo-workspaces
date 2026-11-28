@@ -1,6 +1,6 @@
 # yuhanbo-workspaces
 
-用于管理 Obsidian 工作区的中文插件。基于 [Workspaces Plus](https://github.com/jsmorabito/obsidian-workspaces-plus)（上游基线 `b272d95f64ab1e8d2ef1ad12d0c330152a89b51f`），保留 NothingIsLost 和 Johnny 的原作者署名，按 [GPL-3.0](LICENSE) 分发。
+用于管理 Obsidian 工作区的中文插件。由余汉波独立维护，基于 [Workspaces Plus](https://github.com/jsmorabito/obsidian-workspaces-plus)（上游基线 `b272d95f64ab1e8d2ef1ad12d0c330152a89b51f`）。原作者为 NothingIsLost 和 Johnny（`jsmorabito`）。本衍生版按 [GPL-3.0](LICENSE) 分发，其维护和问题支持由本仓库负责。
 
 插件 ID 为 `yuhanbo-workspaces`，最低支持 Obsidian 1.8.7。当前通过 [GitHub Releases](https://github.com/yuhanbo758/obsidian-yuhanbo-workspaces/releases) 分发。手动安装或更新时，将 Release 的 `main.js`、`manifest.json`、`styles.css` 放入目标库的 `.obsidian/plugins/yuhanbo-workspaces/`，保留已有的 `data.json`。然后重新打开 Obsidian 库。
 
@@ -66,7 +66,7 @@ npm run build
 
 向 GitHub 默认分支 `main` 推送源码、样式、依赖或发布配置的变化，会启动自动发布。流程检查类型、运行测试并构建。若当前版本已经使用，会递增补丁号并同步版本文件，再发布同名标签和三个带构建证明的附件。只改 README 不会触发发布。也可从 Actions 页面手动启动工作流。
 
-本项目是 Workspaces Plus 的衍生版本。提交 Obsidian 官方社区目录仍需要满足其 [fork 收录政策](https://docs.obsidian.md/community-directory/developer-policies#Forks)。
+Workspaces Plus 的维护者 Johnny 已公开授权本衍生版本提交至 Obsidian 官方社区目录并发布后续更新。 [上游授权原文](https://github.com/jsmorabito/obsidian-workspaces-plus/issues/150#issuecomment-7229491340)
 
 ## 回滚
 
